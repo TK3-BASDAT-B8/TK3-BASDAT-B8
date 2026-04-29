@@ -1,7 +1,15 @@
-// Modal helpers
 function openModal(id) {
-  document.getElementById(id).classList.remove('hidden');
+  const modal = document.getElementById(id);
+  if (!modal) return;
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
 }
+
 function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
+  const modal = document.getElementById(id);
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
 }

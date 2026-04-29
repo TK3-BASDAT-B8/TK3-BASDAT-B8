@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse
 
 PAYMENT_STATUSES = ['PAID', 'PENDING', 'CANCELLED']
 
@@ -10,8 +11,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 150000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd1',
-        'customer_name': 'Syafiq Faqih',
-        'event_name': 'Konser Moonzhercup',
+        'customer_name': 'Budi Santoso',
+        'event_name': 'Konser Melodi Senja',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc002',
@@ -19,8 +20,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 200000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd2',
-        'customer_name': 'Elizabeth Meilanny',
-        'event_name': 'Festival Tulus',
+        'customer_name': 'Siti Rahayu',
+        'event_name': 'Festival Seni Budaya',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc003',
@@ -28,8 +29,8 @@ ORDERS = [
         'payment_status': 'PENDING',
         'total_amount': 75000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd3',
-        'customer_name': 'Rashika Maharani',
-        'event_name': 'Malam Dangdut Academy',
+        'customer_name': 'Andi Wijaya',
+        'event_name': 'Malam Akustik Bandung',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc004',
@@ -37,8 +38,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 300000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd4',
-        'customer_name': 'Nadzim',
-        'event_name': 'Konser Twice in Jakarta',
+        'customer_name': 'Dewi Putri',
+        'event_name': 'Konser Melodi Senja',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc005',
@@ -46,8 +47,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 50000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd5',
-        'customer_name': 'Maia Estianty',
-        'event_name': 'Festival Teh Pucuk',
+        'customer_name': 'Reza Firmansyah',
+        'event_name': 'Festival Seni Budaya',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc006',
@@ -55,8 +56,8 @@ ORDERS = [
         'payment_status': 'CANCELLED',
         'total_amount': 0.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd6',
-        'customer_name': 'Mulan Jameela',
-        'event_name': 'Konser Ahmad Dhani',
+        'customer_name': 'Maya Indira',
+        'event_name': 'Malam Akustik Bandung',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc007',
@@ -64,8 +65,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 120000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd1',
-        'customer_name': 'Gilang Saputra',
-        'event_name': 'Festival Lady Gaga',
+        'customer_name': 'Budi Santoso',
+        'event_name': 'Festival Seni Budaya',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc008',
@@ -73,8 +74,8 @@ ORDERS = [
         'payment_status': 'PENDING',
         'total_amount': 90000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd2',
-        'customer_name': 'Mei Ching',
-        'event_name': 'Konser F1',
+        'customer_name': 'Siti Rahayu',
+        'event_name': 'Konser Melodi Senja',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc009',
@@ -82,8 +83,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 45000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd3',
-        'customer_name': 'Sheriqa Dewina',
-        'event_name': 'Festival Kpop lokal',
+        'customer_name': 'Andi Wijaya',
+        'event_name': 'Festival Seni Budaya',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc010',
@@ -91,8 +92,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 250000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd4',
-        'customer_name': 'Syahwa Putri',
-        'event_name': 'Konser Twice in Bandung',
+        'customer_name': 'Dewi Putri',
+        'event_name': 'Malam Akustik Bandung',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc011',
@@ -100,8 +101,8 @@ ORDERS = [
         'payment_status': 'PAID',
         'total_amount': 100000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd5',
-        'customer_name': 'Rashika Putri',
-        'event_name': 'Konser JKT48',
+        'customer_name': 'Reza Firmansyah',
+        'event_name': 'Konser Melodi Senja',
     },
     {
         'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc012',
@@ -109,18 +110,26 @@ ORDERS = [
         'payment_status': 'PENDING',
         'total_amount': 30000.00,
         'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd6',
-        'customer_name': 'Rivaldy Putra',
-        'event_name': 'Festival Katseye',
+        'customer_name': 'Maya Indira',
+        'event_name': 'Festival Seni Budaya',
     },
 ]
 
-ORGANIZER_EVENT_NAMES = ['Konser Melodi Senja', 'Festival Seni Budaya']
-MOCK_CUSTOMER_ID = 'dddddddd-dddd-dddd-dddd-ddddddddddd1'
 MOCK_ROLE = 'admin'
+MOCK_CUSTOMER_ID = 'dddddddd-dddd-dddd-dddd-ddddddddddd1'
+ORGANIZER_EVENT_NAMES = ['Konser Melodi Senja', 'Festival Seni Budaya']
 
 
-def get_mock_role(request):
+def get_role(request):
     return request.GET.get('role', MOCK_ROLE)
+
+
+def is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
+def redirect_with_role(role):
+    return redirect(f'/orders/?role={role}')
 
 
 def format_rupiah(amount):
@@ -128,7 +137,7 @@ def format_rupiah(amount):
 
 
 def order_list(request):
-    role = get_mock_role(request)
+    role = get_role(request)
 
     role_orders = list(ORDERS)
 
@@ -166,16 +175,24 @@ def order_list(request):
         'total_orders': total_orders,
         'total_paid': total_paid,
         'total_pending': total_pending,
-        'total_revenue': total_revenue,
         'total_revenue_display': format_rupiah(total_revenue),
     })
 
 
 def checkout(request):
-    role = get_mock_role(request)
+    role = get_role(request)
+
+    if request.method == 'POST':
+        if is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'message': 'Order berhasil dibuat! Status pembayaran: PENDING.'
+            })
+
+        messages.success(request, 'Order berhasil dibuat! Status pembayaran: PENDING.')
+        return redirect_with_role(role)
 
     event = {
-        'event_id': 'evt-001',
         'event_title': 'Konser Melodi Senja',
         'event_datetime': '2026-05-15 19:00',
         'venue_name': 'Jakarta Convention Center',
@@ -193,10 +210,6 @@ def checkout(request):
         ],
     }
 
-    if request.method == 'POST':
-        messages.success(request, 'Order berhasil dibuat! Status pembayaran: PENDING.')
-        return redirect('order_list')
-
     return render(request, 'orders/checkout.html', {
         'role': role,
         'event': event,
@@ -204,48 +217,74 @@ def checkout(request):
 
 
 def order_update(request, order_id):
-    role = get_mock_role(request)
+    role = get_role(request)
 
     if role != 'admin':
+        if is_ajax(request):
+            return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat update order.'}, status=403)
+
         messages.error(request, 'Hanya admin yang dapat update order.')
-        return redirect('order_list')
-
-    order = next((o for o in ORDERS if o['order_id'] == order_id), None)
-
-    if order is None:
-        messages.error(request, 'Order tidak ditemukan.')
-        return redirect('order_list')
+        return redirect_with_role(role)
 
     if request.method == 'POST':
         new_status = request.POST.get('payment_status')
-        messages.success(request, f"Order berhasil diupdate menjadi {new_status}.")
-        return redirect('order_list')
 
-    return render(request, 'orders/order_update.html', {
-        'role': role,
-        'order': order,
-        'payment_statuses': PAYMENT_STATUSES,
-    })
+        found = False
+        for order in ORDERS:
+            if order['order_id'] == order_id:
+                order['payment_status'] = new_status
+                found = True
+                break
+
+        if not found:
+            if is_ajax(request):
+                return JsonResponse({'success': False, 'message': 'Order tidak ditemukan.'}, status=404)
+
+            messages.error(request, 'Order tidak ditemukan.')
+            return redirect_with_role(role)
+
+        if is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'message': f'Order berhasil diupdate menjadi {new_status}.'
+            })
+
+        messages.success(request, f'Order berhasil diupdate menjadi {new_status}.')
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)
 
 
 def order_delete(request, order_id):
-    role = get_mock_role(request)
+    role = get_role(request)
 
     if role != 'admin':
+        if is_ajax(request):
+            return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat delete order.'}, status=403)
+
         messages.error(request, 'Hanya admin yang dapat delete order.')
-        return redirect('order_list')
-
-    order = next((o for o in ORDERS if o['order_id'] == order_id), None)
-
-    if order is None:
-        messages.error(request, 'Order tidak ditemukan.')
-        return redirect('order_list')
+        return redirect_with_role(role)
 
     if request.method == 'POST':
-        messages.success(request, 'Order berhasil dihapus.')
-        return redirect('order_list')
+        global ORDERS
 
-    return render(request, 'orders/order_confirm_delete.html', {
-        'role': role,
-        'order': order,
-    })
+        before_count = len(ORDERS)
+        ORDERS = [order for order in ORDERS if order['order_id'] != order_id]
+
+        if len(ORDERS) == before_count:
+            if is_ajax(request):
+                return JsonResponse({'success': False, 'message': 'Order tidak ditemukan.'}, status=404)
+
+            messages.error(request, 'Order tidak ditemukan.')
+            return redirect_with_role(role)
+
+        if is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'message': 'Order berhasil dihapus.'
+            })
+
+        messages.success(request, 'Order berhasil dihapus.')
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)
