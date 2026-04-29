@@ -3,6 +3,105 @@ from django.contrib import messages
 from django.urls import reverse
 
 
+# Ticket Category Dummy Data
+
+DUMMY_TICKET_CATEGORIES = [
+    {
+        "category_id": "cat_vip",
+        "category_name": "VIP",
+        "quota": 150,
+        "price": "Rp 750,000",
+        "event_title": "Konser Melodi Senja",
+    },
+    {
+        "category_id": "cat_ga",
+        "category_name": "General Admission",
+        "quota": 500,
+        "price": "Rp 150,000",
+        "event_title": "Festival Seni Budaya",
+    },
+    {
+        "category_id": "cat_wvip",
+        "category_name": "WVIP",
+        "quota": 50,
+        "price": "Rp 1,500,000",
+        "event_title": "Rock Legends Tour",
+    },
+]
+
+
+def _find_ticket_category(category_id):
+    for category in DUMMY_TICKET_CATEGORIES:
+        if str(category["category_id"]) == str(category_id):
+            return category
+    return None
+
+
+def ticket_category_list(request):
+    return render(request, "tickets/ticket_category_list.html", {
+        "categories": DUMMY_TICKET_CATEGORIES,
+        "stats": {
+            "total": len(DUMMY_TICKET_CATEGORIES),
+            "available": 0,
+            "revenue": 0,
+        },
+        "user_role": "administrator",
+    })
+
+
+def ticket_category_create(request):
+    if request.method == "POST":
+        messages.success(request, "Kategori tiket berhasil dibuat. Ini masih dummy frontend.")
+        return redirect("tickets:ticket_category_list")
+
+    return render(request, "tickets/ticket_category_form.html", {
+        "form_mode": "create",
+        "selected_category": {},
+        "user_role": "administrator",
+    })
+
+
+def ticket_category_edit(request, category_id):
+    selected_category = _find_ticket_category(category_id)
+
+    if not selected_category:
+        messages.error(request, "Kategori tiket tidak ditemukan.")
+        return redirect("tickets:ticket_category_list")
+
+    if request.method == "POST":
+        messages.success(request, "Kategori tiket berhasil diperbarui. Ini masih dummy frontend.")
+        return redirect("tickets:ticket_category_list")
+
+    return render(request, "tickets/ticket_category_form.html", {
+        "form_mode": "edit",
+        "selected_category": selected_category,
+        "user_role": "administrator",
+    })
+
+
+def ticket_category_delete(request, category_id):
+    selected_category = _find_ticket_category(category_id)
+
+    if not selected_category:
+        messages.error(request, "Kategori tiket tidak ditemukan.")
+        return redirect("tickets:ticket_category_list")
+
+    if request.method == "POST":
+        messages.success(request, "Kategori tiket berhasil dihapus. Ini masih dummy frontend.")
+        return redirect("tickets:ticket_category_list")
+
+    return render(request, "tickets/ticket_category_confirm_delete.html", {
+        "selected_category": selected_category,
+        "user_role": "administrator",
+    })
+
+
+def ticket_category_partial(request):
+    return render(request, "tickets/partials/ticket_category_table.html", {
+        "categories": DUMMY_TICKET_CATEGORIES,
+        "user_role": "administrator",
+    })
+
 
 # Ticket Dummy data
 
@@ -287,21 +386,28 @@ def ticket_create(request):
 
     show_seat_field = request.GET.get("reserved", "1") == "1"
 
-    return render(request, "tickets/ticket_form.html", {
+    tickets = _filter_tickets_by_role(DUMMY_TICKETS, page_role)
+    context = _ticket_context(request, tickets)
+
+    context.update({
         "form_mode": "create",
-        "tickets": DUMMY_TICKETS,
-        "stats": get_ticket_stats(),
         "orders": DUMMY_ORDERS,
         "categories": DUMMY_CATEGORIES,
         "seats": DUMMY_SEATS,
         "selected_ticket": {},
         "show_seat_field": show_seat_field,
-        "page_role": page_role,
-        "user_role": "administrator" if page_role == "admin" else "organizer",
     })
+
+    return render(request, "tickets/ticket_form.html", context)
 
 
 def ticket_edit(request, ticket_id):
+    page_role = _get_page_role(request)
+
+    if page_role != "admin":
+        messages.error(request, "Hanya Admin yang dapat mengubah tiket.")
+        return _redirect_ticket_list_with_role(page_role)
+
     selected_ticket = _find_ticket(ticket_id)
 
     if not selected_ticket:
@@ -312,21 +418,28 @@ def ticket_edit(request, ticket_id):
         messages.success(request, "Tiket berhasil diperbarui. Ini masih dummy frontend.")
         return _redirect_ticket_list_with_role("admin")
 
-    return render(request, "tickets/ticket_form.html", {
+    tickets = _filter_tickets_by_role(DUMMY_TICKETS, page_role)
+    context = _ticket_context(request, tickets)
+
+    context.update({
         "form_mode": "edit",
-        "tickets": DUMMY_TICKETS,
-        "stats": get_ticket_stats(),
         "orders": DUMMY_ORDERS,
         "categories": DUMMY_CATEGORIES,
         "seats": DUMMY_SEATS,
         "selected_ticket": selected_ticket,
         "show_seat_field": True,
-        "page_role": "admin",
-        "user_role": "administrator",
     })
+
+    return render(request, "tickets/ticket_form.html", context)
 
 
 def ticket_delete(request, ticket_id):
+    page_role = _get_page_role(request)
+
+    if page_role != "admin":
+        messages.error(request, "Hanya Admin yang dapat menghapus tiket.")
+        return _redirect_ticket_list_with_role(page_role)
+
     selected_ticket = _find_ticket(ticket_id)
 
     if not selected_ticket:
@@ -337,10 +450,11 @@ def ticket_delete(request, ticket_id):
         messages.success(request, "Tiket berhasil dihapus. Ini masih dummy frontend.")
         return _redirect_ticket_list_with_role("admin")
 
-    return render(request, "tickets/ticket_confirm_delete.html", {
-        "tickets": DUMMY_TICKETS,
-        "stats": get_ticket_stats(),
+    tickets = _filter_tickets_by_role(DUMMY_TICKETS, page_role)
+    context = _ticket_context(request, tickets)
+
+    context.update({
         "selected_ticket": selected_ticket,
-        "page_role": "admin",
-        "user_role": "administrator",
     })
+
+    return render(request, "tickets/ticket_confirm_delete.html", context)
