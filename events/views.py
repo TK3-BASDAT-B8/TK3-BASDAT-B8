@@ -130,8 +130,9 @@ DUMMY_EVENTS = [
 
 
 def _can_manage(request):
-    roles = request.session.get("roles", [])
-    return "administrator" in roles or "organizer" in roles
+    user_data = request.session.get("user", {})
+    role = user_data.get("role", "")
+    return role in ["administrator", "organizer"]
 
 
 def _find_event(event_id):
@@ -171,7 +172,7 @@ def event_detail(request, event_id):
     event = _find_event(event_id)
     if not event:
         messages.error(request, "Event tidak ditemukan.")
-        return redirect("event_list")
+        return redirect("events:event_list")
 
     return render(request, "events/event_detail.html", {
         "event": event,
@@ -182,11 +183,11 @@ def event_detail(request, event_id):
 def event_create(request):
     if not _can_manage(request):
         messages.error(request, "Kamu tidak punya akses untuk membuat event.")
-        return redirect("event_list")
+        return redirect("events:event_list")
 
     if request.method == "POST":
         messages.success(request, "Event berhasil dibuat. Ini masih dummy frontend.")
-        return redirect("event_list")
+        return redirect("events:event_list")
 
     return render(request, "events/partials/event_modal.html", {
         "mode": "create",
@@ -201,16 +202,16 @@ def event_create(request):
 def event_edit(request, event_id):
     if not _can_manage(request):
         messages.error(request, "Kamu tidak punya akses untuk mengubah event.")
-        return redirect("event_list")
+        return redirect("events:event_list")
 
     event = _find_event(event_id)
     if not event:
         messages.error(request, "Event tidak ditemukan.")
-        return redirect("event_list")
+        return redirect("events:event_list")
 
     if request.method == "POST":
         messages.success(request, "Event berhasil diperbarui. Ini masih dummy frontend.")
-        return redirect("event_list")
+        return redirect("events:event_list")
 
     return render(request, "events/partials/event_modal.html", {
         "mode": "edit",

@@ -10,7 +10,7 @@
 
     {% if request.session.user.role == 'administrator' or request.session.user.role == 'organizer' %}
     <button
-        hx-get="{% url 'event_create' %}"
+        hx-get="{% url 'events:event_create' %}"
         hx-target="#modal-root"
         hx-swap="innerHTML"
         class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
@@ -32,7 +32,7 @@
 
     <div class="flex gap-2">
         <button type="submit" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">Filter</button>
-        <a href="{% url 'event_list' %}" class="border px-4 py-2 rounded-lg hover:bg-gray-50">Reset</a>
+        <a href="{% url 'events:event_list' %}" class="border px-4 py-2 rounded-lg hover:bg-gray-50">Reset</a>
     </div>
 </form>
 
@@ -71,14 +71,14 @@
             </div>
 
             <div class="mt-5 flex gap-2">
-                <a href="{% url 'event_detail' event.event_id %}"
+                <a href="{% url 'events:event_detail' event.event_id %}"
                    class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
                     Detail
                 </a>
 
                 {% if request.session.user.role == 'administrator' or request.session.user.role == 'organizer' %}
                 <button
-                    hx-get="{% url 'event_edit' event.event_id %}"
+                    hx-get="{% url 'events:event_edit' event.event_id %}"
                     hx-target="#modal-root"
                     hx-swap="innerHTML"
                     class="px-4 py-2 rounded-lg border border-indigo-600 text-indigo-600 hover:bg-indigo-50">
