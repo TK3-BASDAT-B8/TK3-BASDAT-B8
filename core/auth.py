@@ -73,3 +73,23 @@ def login_required(view_func):
             return redirect("accounts:login")
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+def has_role(request, *roles):
+    user = get_current_user(request)
+    if not user:
+        return False
+    return user.get("role") in roles
+
+
+def role_required(*roles):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not get_current_user(request):
+                return redirect("accounts:login")
+            if not has_role(request, *roles):
+                return redirect("accounts:login")
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator

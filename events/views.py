@@ -3,6 +3,8 @@ from datetime import datetime
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
+from core.auth import role_required
+from core.db import fetch_all, fetch_one, execute_query
 from venues.views import DUMMY_VENUES
 
 DUMMY_ORGANIZERS = [
@@ -166,6 +168,10 @@ def event_list(request):
         "selected_venue": request.GET.get("venue", ""),
         "can_manage": _can_manage(request),
     })
+
+
+def event_partial(request):
+    return render(request, "events/partials/event_cards.html", {"events": DUMMY_EVENTS})
 
 
 def event_detail(request, event_id):
