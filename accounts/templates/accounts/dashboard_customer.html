@@ -1,8 +1,18 @@
-{% extends 'base.html' %}
-{% block title %}TikTakTuk{% endblock %}
+{% extends "base.html" %}
 {% block content %}
-<div class="max-w-xl mx-auto">
-  <h1 class="text-2xl font-bold text-gray-800 mb-6"><!-- TODO: page title --></h1>
-  <!-- TODO: implement this template -->
+<section class="bg-blue-600 text-white rounded-2xl p-6 mb-6 flex justify-between">
+  <div>
+    <p>Selamat datang kembali</p>
+    <h1 class="text-2xl font-bold">{{ user.name }}</h1>
+    <p>Temukan acara favorit Anda</p>
+  </div>
+  <a href="#" class="bg-white text-blue-600 px-4 py-2 rounded-full h-fit">Cari Tiket</a>
+</section>
+
+<div class="grid grid-cols-4 gap-4">
+  <div class="bg-white p-5 rounded-xl shadow"><p>Tiket Aktif</p><h2 class="text-2xl font-bold">2</h2></div>
+  <div class="bg-white p-5 rounded-xl shadow"><p>Total Order</p><h2 class="text-2xl font-bold">12</h2></div>
+  <div class="bg-white p-5 rounded-xl shadow"><p>Event Diikuti</p><h2 class="text-2xl font-bold">3</h2></div>
+  <div class="bg-white p-5 rounded-xl shadow"><p>Total Belanja</p><h2 class="text-2xl font-bold">Rp 1.6M</h2></div>
 </div>
 {% endblock %}
