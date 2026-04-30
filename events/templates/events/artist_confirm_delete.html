@@ -13,7 +13,7 @@
         <p class="text-sm text-gray-600 mb-6">
             Apakah Anda yakin ingin menghapus artis ini? Tindakan ini tidak dapat dibatalkan.
         </p>
-        <form method="post" action="{% url 'artist_delete' artist.artist_id %}">
+        <form method="post" action="{% url 'events:artist_delete' artist.artist_id %}">
             {% csrf_token %}
             <div class="flex gap-3 justify-end">
                 <button type="button" onclick="document.getElementById('modal-root').innerHTML=''"

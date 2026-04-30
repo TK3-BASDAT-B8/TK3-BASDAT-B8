@@ -8,7 +8,7 @@
         <p class="text-sm text-gray-500">Kelola kategori dan harga tiket per acara</p>
     </div>
     {% if 'administrator' in request.session.roles or 'organizer' in request.session.roles %}
-    <button hx-get="{% url 'ticket_category_create' %}" hx-target="#modal-root" hx-swap="innerHTML"
+    <button hx-get="{% url 'tickets:ticket_category_create' %}" hx-target="#modal-root" hx-swap="innerHTML"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
         + Tambah Kategori
     </button>
@@ -78,7 +78,7 @@
                 <td class="py-4">
                     {% if 'administrator' in request.session.roles or 'organizer' in request.session.roles %}
                     <div class="flex items-center gap-3">
-                        <button hx-get="{% url 'ticket_category_edit' cat.category_id %}" hx-target="#modal-root" hx-swap="innerHTML"
+                        <button hx-get="{% url 'tickets:ticket_category_edit' cat.category_id %}" hx-target="#modal-root" hx-swap="innerHTML"
                             class="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,7 +86,7 @@
                             </svg>
                             Edit
                         </button>
-                        <button hx-get="{% url 'ticket_category_delete' cat.category_id %}" hx-target="#modal-root" hx-swap="innerHTML"
+                        <button hx-get="{% url 'tickets:ticket_category_delete' cat.category_id %}" hx-target="#modal-root" hx-swap="innerHTML"
                             class="flex items-center gap-1 text-red-400 hover:text-red-600 text-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
