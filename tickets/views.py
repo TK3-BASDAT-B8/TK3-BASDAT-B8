@@ -41,7 +41,7 @@ def ticket_category_partial(request):
     return render(request, 'tickets/partials/ticket_category_table.html', {'categories': categories})
 
 
-# @role_required('administrator', 'organizer')  # DEBUG
+@role_required('administrator', 'organizer')
 def ticket_category_create(request):
     events = fetch_all("SELECT * FROM event ORDER BY event_title")
     if request.method == 'POST':
@@ -61,7 +61,7 @@ def ticket_category_create(request):
     return render(request, 'tickets/ticket_category_form.html', {'action': 'create', 'events': events})
 
 
-# @role_required('administrator', 'organizer')  # DEBUG
+@role_required('administrator', 'organizer')
 def ticket_category_edit(request, category_id):
     category = fetch_one("SELECT * FROM ticket_category WHERE category_id = %s", [category_id])
     events = fetch_all("SELECT * FROM event ORDER BY event_title")
@@ -80,7 +80,7 @@ def ticket_category_edit(request, category_id):
     return render(request, 'tickets/ticket_category_form.html', {'action': 'edit', 'category': category, 'events': events})
 
 
-# @role_required('administrator', 'organizer')  # DEBUG
+@role_required('administrator', 'organizer')
 def ticket_category_delete(request, category_id):
     category = fetch_one("SELECT * FROM ticket_category WHERE category_id = %s", [category_id])
     if not category:

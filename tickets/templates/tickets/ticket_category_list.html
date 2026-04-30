@@ -7,12 +7,12 @@
         <h1 class="text-2xl font-bold text-gray-900">Kategori Tiket</h1>
         <p class="text-sm text-gray-500">Kelola kategori dan harga tiket per acara</p>
     </div>
-    {# {% if 'administrator' in request.session.roles or 'organizer' in request.session.roles %} #}
+    {% if 'administrator' in request.session.roles or 'organizer' in request.session.roles %}
     <button hx-get="{% url 'ticket_category_create' %}" hx-target="#modal-root" hx-swap="innerHTML"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
         + Tambah Kategori
     </button>
-    {# {% endif %} #}
+    {% endif %}
 </div>
 
 <div class="grid grid-cols-3 gap-4 mb-6">
@@ -76,7 +76,7 @@
                 <td class="py-4 text-sm font-medium text-blue-600">Rp {{ cat.price }}</td>
                 <td class="py-4 text-sm text-gray-600">{{ cat.quota }} tiket</td>
                 <td class="py-4">
-                    {# {% if 'administrator' in request.session.roles or 'organizer' in request.session.roles %} #}
+                    {% if 'administrator' in request.session.roles or 'organizer' in request.session.roles %}
                     <div class="flex items-center gap-3">
                         <button hx-get="{% url 'ticket_category_edit' cat.category_id %}" hx-target="#modal-root" hx-swap="innerHTML"
                             class="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
@@ -95,7 +95,7 @@
                             Hapus
                         </button>
                     </div>
-                    {# {% endif %} #}
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
