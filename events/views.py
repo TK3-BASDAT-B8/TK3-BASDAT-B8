@@ -131,8 +131,24 @@ def event_edit(request, event_id):
 
 
 def artist_list(request):
-    artists = fetch_all("SELECT * FROM artist ORDER BY name")
-    return render(request, 'events/artist_list.html', {'artists': artists})
+    search = request.GET.get('search', '')
+    sql = "SELECT * FROM artist"
+    params = []
+    if search:
+        sql += " WHERE name ILIKE %s OR genre ILIKE %s"
+        params = [f'%{search}%', f'%{search}%']
+    sql += " ORDER BY name"
+    artists = fetch_all(sql, params)
+    total_artists = fetch_one("SELECT COUNT(*) as count FROM artist")
+    total_genres = fetch_one("SELECT COUNT(DISTINCT genre) as count FROM artist WHERE genre IS NOT NULL")
+    total_in_events = fetch_one("SELECT COUNT(DISTINCT artist_id) as count FROM event_artist")
+    return render(request, 'events/artist_list.html', {
+        'artists': artists,
+        'search': search,
+        'total_artists': total_artists['count'] if total_artists else 0,
+        'total_genres': total_genres['count'] if total_genres else 0,
+        'total_in_events': total_in_events['count'] if total_in_events else 0,
+    })
 
 
 def artist_partial(request):
