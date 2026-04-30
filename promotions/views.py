@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.contrib import messages
 
-#dummy datanya ini, buakn hardcode yh belom mainin psql
 PROMOTIONS = [
     {
         'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1',
@@ -66,12 +66,33 @@ PROMOTIONS = [
 ]
 
 DISCOUNT_TYPES = ['PERCENTAGE', 'NOMINAL']
-#fiturnya specifically buat admin rite but belom bikin auth karena focus di front end
 MOCK_ROLE = 'admin'
 
 
 def get_mock_role(request):
-    return request.GET.get('role', MOCK_ROLE)
+    user = request.session.get("user")
+
+    if user:
+        role = user.get("role")
+
+        if role == "administrator":
+            return "admin"
+
+        if role == "organizer":
+            return "organizer"
+
+        if role == "customer":
+            return "customer"
+
+    return request.GET.get("role", MOCK_ROLE)
+
+
+def is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
+def redirect_with_role(role):
+    return redirect(f'/promotions/?role={role}')
 
 
 def promotion_list(request):
@@ -82,16 +103,10 @@ def promotion_list(request):
     filter_type = request.GET.get('type', 'all')
 
     if search:
-        promotions = [
-            p for p in promotions
-            if search in p['promo_code'].lower()
-        ]
+        promotions = [p for p in promotions if search in p['promo_code'].lower()]
 
     if filter_type in DISCOUNT_TYPES:
-        promotions = [
-            p for p in promotions
-            if p['discount_type'] == filter_type
-        ]
+        promotions = [p for p in promotions if p['discount_type'] == filter_type]
 
     total_promos = len(PROMOTIONS)
     total_usage = sum(p['used'] for p in PROMOTIONS)
@@ -111,56 +126,80 @@ def promotion_list(request):
 
 def promotion_create(request):
     role = get_mock_role(request)
+
     if role != 'admin':
-        return redirect('promotion_list')
+        return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat membuat promo.'}, status=403)
 
     if request.method == 'POST':
-        messages.success(request, 'Promo baru berhasil dibuat!')
-        return redirect('promotion_list')
+        new_promo = {
+            'promotion_id': f'promo-{len(PROMOTIONS) + 1}',
+            'promo_code': request.POST.get('promo_code'),
+            'discount_type': request.POST.get('discount_type'),
+            'discount_value': float(request.POST.get('discount_value')),
+            'start_date': request.POST.get('start_date'),
+            'end_date': request.POST.get('end_date'),
+            'usage_limit': int(request.POST.get('usage_limit')),
+            'used': 0,
+        }
 
-    return render(request, 'promotions/promotion_form.html', {
-        'role': role,
-        'mode': 'create',
-        'promotion': None,
-        'discount_types': DISCOUNT_TYPES,
-    })
+        PROMOTIONS.insert(0, new_promo)
+
+        if is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'Promo baru berhasil dibuat!'})
+
+        messages.success(request, 'Promo baru berhasil dibuat!')
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)
 
 
 def promotion_update(request, promotion_id):
     role = get_mock_role(request)
+
     if role != 'admin':
-        return redirect('promotion_list')
+        return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat update promo.'}, status=403)
 
     promotion = next((p for p in PROMOTIONS if p['promotion_id'] == promotion_id), None)
+
     if not promotion:
-        return redirect('promotion_list')
+        return JsonResponse({'success': False, 'message': 'Promo tidak ditemukan.'}, status=404)
 
     if request.method == 'POST':
-        messages.success(request, f"Promo {promotion['promo_code']} berhasil diperbarui!")
-        return redirect('promotion_list')
+        promotion['promo_code'] = request.POST.get('promo_code')
+        promotion['discount_type'] = request.POST.get('discount_type')
+        promotion['discount_value'] = float(request.POST.get('discount_value'))
+        promotion['start_date'] = request.POST.get('start_date')
+        promotion['end_date'] = request.POST.get('end_date')
+        promotion['usage_limit'] = int(request.POST.get('usage_limit'))
 
-    return render(request, 'promotions/promotion_form.html', {
-        'role': role,
-        'mode': 'update',
-        'promotion': promotion,
-        'discount_types': DISCOUNT_TYPES,
-    })
+        if is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'Promo berhasil diperbarui!'})
+
+        messages.success(request, 'Promo berhasil diperbarui!')
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)
 
 
 def promotion_delete(request, promotion_id):
     role = get_mock_role(request)
-    if role != 'admin':
-        return redirect('promotion_list')
 
-    promotion = next((p for p in PROMOTIONS if p['promotion_id'] == promotion_id), None)
-    if not promotion:
-        return redirect('promotion_list')
+    if role != 'admin':
+        return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat delete promo.'}, status=403)
 
     if request.method == 'POST':
-        messages.success(request, f"Promo {promotion['promo_code']} berhasil dihapus!")
-        return redirect('promotion_list')
+        global PROMOTIONS
 
-    return render(request, 'promotions/promotion_confirm_delete.html', {
-        'role': role,
-        'promotion': promotion,
-    })
+        before_count = len(PROMOTIONS)
+        PROMOTIONS = [p for p in PROMOTIONS if p['promotion_id'] != promotion_id]
+
+        if len(PROMOTIONS) == before_count:
+            return JsonResponse({'success': False, 'message': 'Promo tidak ditemukan.'}, status=404)
+
+        if is_ajax(request):
+            return JsonResponse({'success': True, 'message': 'Promo berhasil dihapus!'})
+
+        messages.success(request, 'Promo berhasil dihapus!')
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)
