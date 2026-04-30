@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.urls import reverse
 
 
 # Venue Dummy Data
@@ -177,6 +178,47 @@ def _find_seat(seat_id):
     return None
 
 
+def _get_seat_page_role(request):
+    role = request.GET.get("role", "admin").strip().lower()
+
+    if role in ["admin", "administrator"]:
+        return "admin"
+
+    if role == "organizer":
+        return "organizer"
+
+    if role == "customer":
+        return "customer"
+
+    return "admin"
+
+
+def _redirect_seat_list_with_role(page_role):
+    url = reverse("venues:seat_list")
+    return redirect(f"{url}?role={page_role}")
+
+
+def _seat_context(request, seats):
+    page_role = _get_seat_page_role(request)
+    can_manage_seat = page_role in ["admin", "organizer"]
+
+    return {
+        "seats": seats,
+        "venues": DUMMY_VENUES,
+        "stats": _seat_stats(seats),
+        "page_role": page_role,
+        "page_title": "Manajemen Kursi" if can_manage_seat else "Daftar Kursi",
+        "page_subtitle": (
+            "Kelola kursi dan denah tempat duduk venue"
+            if can_manage_seat
+            else "Lihat daftar kursi dan status ketersediaannya"
+        ),
+        "can_create_seat": can_manage_seat,
+        "can_manage_seat": can_manage_seat,
+        "user_role": "administrator" if page_role == "admin" else page_role,
+    }
+
+
 def seat_list(request):
     q = request.GET.get("q", "").strip().lower()
     venue = request.GET.get("venue", "").strip()
@@ -198,76 +240,83 @@ def seat_list(request):
             if seat["venue_id"] == venue
         ]
 
-    return render(request, "venues/seat_list.html", {
-        "seats": filtered_seats,
-        "venues": DUMMY_VENUES,
-        "stats": _seat_stats(DUMMY_SEATS),
-        "user_role": "administrator",
-    })
+    return render(request, "venues/seat_list.html", _seat_context(request, filtered_seats))
 
 
 def seat_partial(request):
-    return render(request, "venues/partials/seat_table.html", {
-        "seats": DUMMY_SEATS,
-        "user_role": "administrator",
-    })
+    return render(request, "venues/partials/seat_table.html", _seat_context(request, DUMMY_SEATS))
 
 
 def seat_create(request):
+    page_role = _get_seat_page_role(request)
+
+    if page_role not in ["admin", "organizer"]:
+        messages.error(request, "Hanya Admin atau Organizer yang dapat menambahkan kursi.")
+        return _redirect_seat_list_with_role(page_role)
+
     if request.method == "POST":
         messages.success(request, "Kursi berhasil ditambahkan. Ini masih dummy frontend.")
-        return redirect("venues:seat_list")
+        return _redirect_seat_list_with_role(page_role)
 
-    return render(request, "venues/seat_form.html", {
+    context = _seat_context(request, DUMMY_SEATS)
+    context.update({
         "form_mode": "create",
-        "venues": DUMMY_VENUES,
-        "seats": DUMMY_SEATS,
-        "stats": _seat_stats(DUMMY_SEATS),
         "selected_seat": {},
-        "user_role": "administrator",
     })
+
+    return render(request, "venues/seat_form.html", context)
 
 
 def seat_edit(request, seat_id):
+    page_role = _get_seat_page_role(request)
+
+    if page_role not in ["admin", "organizer"]:
+        messages.error(request, "Hanya Admin atau Organizer yang dapat mengubah kursi.")
+        return _redirect_seat_list_with_role(page_role)
+
     selected_seat = _find_seat(seat_id)
 
     if not selected_seat:
         messages.error(request, "Kursi tidak ditemukan.")
-        return redirect("venues:seat_list")
+        return _redirect_seat_list_with_role(page_role)
 
     if request.method == "POST":
         messages.success(request, "Kursi berhasil diperbarui. Ini masih dummy frontend.")
-        return redirect("venues:seat_list")
+        return _redirect_seat_list_with_role(page_role)
 
-    return render(request, "venues/seat_form.html", {
+    context = _seat_context(request, DUMMY_SEATS)
+    context.update({
         "form_mode": "edit",
-        "venues": DUMMY_VENUES,
-        "seats": DUMMY_SEATS,
-        "stats": _seat_stats(DUMMY_SEATS),
         "selected_seat": selected_seat,
-        "user_role": "administrator",
     })
+
+    return render(request, "venues/seat_form.html", context)
 
 
 def seat_delete(request, seat_id):
+    page_role = _get_seat_page_role(request)
+
+    if page_role not in ["admin", "organizer"]:
+        messages.error(request, "Hanya Admin atau Organizer yang dapat menghapus kursi.")
+        return _redirect_seat_list_with_role(page_role)
+
     selected_seat = _find_seat(seat_id)
 
     if not selected_seat:
         messages.error(request, "Kursi tidak ditemukan.")
-        return redirect("venues:seat_list")
+        return _redirect_seat_list_with_role(page_role)
 
     if selected_seat["status"] == "Terisi":
         messages.error(request, "Kursi ini sudah di-assign ke tiket dan tidak dapat dihapus.")
-        return redirect("venues:seat_list")
+        return _redirect_seat_list_with_role(page_role)
 
     if request.method == "POST":
         messages.success(request, "Kursi berhasil dihapus. Ini masih dummy frontend.")
-        return redirect("venues:seat_list")
+        return _redirect_seat_list_with_role(page_role)
 
-    return render(request, "venues/seat_confirm_delete.html", {
+    context = _seat_context(request, DUMMY_SEATS)
+    context.update({
         "selected_seat": selected_seat,
-        "venues": DUMMY_VENUES,
-        "seats": DUMMY_SEATS,
-        "stats": _seat_stats(DUMMY_SEATS),
-        "user_role": "administrator",
     })
+
+    return render(request, "venues/seat_confirm_delete.html", context)

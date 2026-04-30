@@ -5,20 +5,22 @@
   <div class="mb-6 flex items-start justify-between gap-4">
     <div>
       <h1 class="text-2xl font-extrabold tracking-tight text-slate-950">
-        Manajemen Kursi
+        {{ page_title }}
       </h1>
       <p class="mt-1 text-sm text-slate-500">
-        Kelola kursi dan denah tempat duduk venue
+        {{ page_subtitle }}
       </p>
     </div>
 
-    <a
-      href="{% url 'venues:seat_create' %}"
-      class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-    >
-      <span class="text-base leading-none">+</span>
-      Tambah Kursi
-    </a>
+    {% if can_create_seat %}
+      <a
+        href="{% url 'venues:seat_create' %}?role={{ page_role }}"
+        class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
+      >
+        <span class="text-base leading-none">+</span>
+        Tambah Kursi
+      </a>
+    {% endif %}
   </div>
 
   <div class="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -52,6 +54,8 @@
 
   <div class="mb-5">
     <form method="get" class="grid grid-cols-1 gap-3 md:grid-cols-5">
+      <input type="hidden" name="role" value="{{ page_role }}">
+
       <div class="relative md:col-span-2">
         <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
