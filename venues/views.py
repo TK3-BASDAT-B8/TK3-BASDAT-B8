@@ -1,0 +1,273 @@
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+
+# Venue Dummy Data
+
+DUMMY_VENUES = [
+    {
+        "venue_id": "11111111-1111-1111-1111-111111111111",
+        "venue_name": "Jakarta Convention Center",
+        "capacity": 5000,
+        "address": "Jl. Gatot Subroto, Jakarta",
+        "city": "Jakarta",
+    }
+]
+
+
+def venue_list(request):
+    return render(request, "venues/venue_list.html", {
+        "venues": DUMMY_VENUES,
+        "cities": ["Jakarta"],
+        "search": "",
+        "selected_city": "",
+        "user_role": "administrator",
+    })
+
+
+def venue_partial(request):
+    return render(request, "venues/partials/venue_table.html", {
+        "venues": DUMMY_VENUES,
+        "user_role": "administrator",
+    })
+
+
+def venue_create(request):
+    if request.method == "POST":
+        messages.success(request, "Venue berhasil ditambahkan. Ini masih dummy frontend.")
+        return redirect("venues:venue_list")
+
+    return render(request, "venues/venue_form.html", {
+        "action": "create",
+        "user_role": "administrator",
+    })
+
+
+def venue_edit(request, venue_id):
+    selected_venue = None
+
+    for venue in DUMMY_VENUES:
+        if str(venue["venue_id"]) == str(venue_id):
+            selected_venue = venue
+            break
+
+    if not selected_venue:
+        messages.error(request, "Venue tidak ditemukan.")
+        return redirect("venues:venue_list")
+
+    if request.method == "POST":
+        messages.success(request, "Venue berhasil diperbarui. Ini masih dummy frontend.")
+        return redirect("venues:venue_list")
+
+    return render(request, "venues/venue_form.html", {
+        "action": "edit",
+        "venue": selected_venue,
+        "user_role": "administrator",
+    })
+
+
+def venue_delete(request, venue_id):
+    selected_venue = None
+
+    for venue in DUMMY_VENUES:
+        if str(venue["venue_id"]) == str(venue_id):
+            selected_venue = venue
+            break
+
+    if not selected_venue:
+        messages.error(request, "Venue tidak ditemukan.")
+        return redirect("venues:venue_list")
+
+    if request.method == "POST":
+        messages.success(request, "Venue berhasil dihapus. Ini masih dummy frontend.")
+        return redirect("venues:venue_list")
+
+    return render(request, "venues/venue_confirm_delete.html", {
+        "venue": selected_venue,
+        "user_role": "administrator",
+    })
+
+
+# Seat Dummy Data
+
+FILLED_SEAT_IDS = {
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002",
+    "00000000-0000-0000-0000-000000000003",
+    "00000000-0000-0000-0000-000000000004",
+    "00000000-0000-0000-0000-000000000005",
+    "00000000-0000-0000-0000-000000000006",
+    "00000000-0000-0000-0000-000000000007",
+    "00000000-0000-0000-0000-000000000008",
+    "00000000-0000-0000-0000-000000000009",
+    "00000000-0000-0000-0000-000000000010",
+}
+
+
+RAW_DUMMY_SEATS = [
+    ("00000000-0000-0000-0000-000000000001", "WVIP", "1", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000002", "WVIP", "2", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000003", "WVIP", "3", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000004", "WVIP", "4", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000005", "WVIP", "5", "A", "11111111-1111-1111-1111-111111111111"),
+
+    ("00000000-0000-0000-0000-000000000006", "VIP", "1", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000007", "VIP", "2", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000008", "VIP", "3", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000009", "VIP", "4", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000010", "VIP", "5", "B", "11111111-1111-1111-1111-111111111111"),
+
+    ("00000000-0000-0000-0000-000000000011", "REGULER", "1", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000012", "REGULER", "2", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000013", "REGULER", "3", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000014", "REGULER", "4", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000015", "REGULER", "5", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000016", "REGULER", "6", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000017", "REGULER", "7", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000018", "REGULER", "8", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000019", "REGULER", "9", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000020", "REGULER", "10", "C", "11111111-1111-1111-1111-111111111111"),
+
+    ("00000000-0000-0000-0000-000000000021", "FESTIVAL", "1", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000022", "FESTIVAL", "2", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000023", "FESTIVAL", "3", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000024", "FESTIVAL", "4", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000025", "FESTIVAL", "5", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000026", "FESTIVAL", "6", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000027", "FESTIVAL", "7", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000028", "FESTIVAL", "8", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000029", "FESTIVAL", "9", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000030", "FESTIVAL", "10", "D", "11111111-1111-1111-1111-111111111111"),
+]
+
+
+def _build_dummy_seats():
+    venue_map = {venue["venue_id"]: venue["venue_name"] for venue in DUMMY_VENUES}
+    seats = []
+
+    for seat_id, section, seat_number, row_number, venue_id in RAW_DUMMY_SEATS:
+        seats.append({
+            "seat_id": seat_id,
+            "section": section,
+            "seat_number": seat_number,
+            "row_number": row_number,
+            "venue_id": venue_id,
+            "venue_name": venue_map.get(venue_id, "-"),
+            "status": "Terisi" if seat_id in FILLED_SEAT_IDS else "Tersedia",
+        })
+
+    return seats
+
+
+DUMMY_SEATS = _build_dummy_seats()
+
+
+def _seat_stats(seats):
+    return {
+        "total": len(seats),
+        "available": len([seat for seat in seats if seat["status"] == "Tersedia"]),
+        "filled": len([seat for seat in seats if seat["status"] == "Terisi"]),
+    }
+
+
+def _find_seat(seat_id):
+    for seat in DUMMY_SEATS:
+        if str(seat["seat_id"]) == str(seat_id):
+            return seat
+    return None
+
+
+def seat_list(request):
+    q = request.GET.get("q", "").strip().lower()
+    venue = request.GET.get("venue", "").strip()
+
+    filtered_seats = DUMMY_SEATS
+
+    if q:
+        filtered_seats = [
+            seat for seat in filtered_seats
+            if q in seat["section"].lower()
+            or q in seat["row_number"].lower()
+            or q in seat["seat_number"].lower()
+            or q in seat["venue_name"].lower()
+        ]
+
+    if venue:
+        filtered_seats = [
+            seat for seat in filtered_seats
+            if seat["venue_id"] == venue
+        ]
+
+    return render(request, "venues/seat_list.html", {
+        "seats": filtered_seats,
+        "venues": DUMMY_VENUES,
+        "stats": _seat_stats(DUMMY_SEATS),
+        "user_role": "administrator",
+    })
+
+
+def seat_partial(request):
+    return render(request, "venues/partials/seat_table.html", {
+        "seats": DUMMY_SEATS,
+        "user_role": "administrator",
+    })
+
+
+def seat_create(request):
+    if request.method == "POST":
+        messages.success(request, "Kursi berhasil ditambahkan. Ini masih dummy frontend.")
+        return redirect("venues:seat_list")
+
+    return render(request, "venues/seat_form.html", {
+        "form_mode": "create",
+        "venues": DUMMY_VENUES,
+        "seats": DUMMY_SEATS,
+        "stats": _seat_stats(DUMMY_SEATS),
+        "selected_seat": {},
+        "user_role": "administrator",
+    })
+
+
+def seat_edit(request, seat_id):
+    selected_seat = _find_seat(seat_id)
+
+    if not selected_seat:
+        messages.error(request, "Kursi tidak ditemukan.")
+        return redirect("venues:seat_list")
+
+    if request.method == "POST":
+        messages.success(request, "Kursi berhasil diperbarui. Ini masih dummy frontend.")
+        return redirect("venues:seat_list")
+
+    return render(request, "venues/seat_form.html", {
+        "form_mode": "edit",
+        "venues": DUMMY_VENUES,
+        "seats": DUMMY_SEATS,
+        "stats": _seat_stats(DUMMY_SEATS),
+        "selected_seat": selected_seat,
+        "user_role": "administrator",
+    })
+
+
+def seat_delete(request, seat_id):
+    selected_seat = _find_seat(seat_id)
+
+    if not selected_seat:
+        messages.error(request, "Kursi tidak ditemukan.")
+        return redirect("venues:seat_list")
+
+    if selected_seat["status"] == "Terisi":
+        messages.error(request, "Kursi ini sudah di-assign ke tiket dan tidak dapat dihapus.")
+        return redirect("venues:seat_list")
+
+    if request.method == "POST":
+        messages.success(request, "Kursi berhasil dihapus. Ini masih dummy frontend.")
+        return redirect("venues:seat_list")
+
+    return render(request, "venues/seat_confirm_delete.html", {
+        "selected_seat": selected_seat,
+        "venues": DUMMY_VENUES,
+        "seats": DUMMY_SEATS,
+        "stats": _seat_stats(DUMMY_SEATS),
+        "user_role": "administrator",
+    })
