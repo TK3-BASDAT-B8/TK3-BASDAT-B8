@@ -75,8 +75,13 @@
                    class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">
                     Detail
                 </a>
+                
+                <a href="{% url 'orders:checkout' %}"
+                   class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+                    Buy
+                </a>
 
-                {% if request.session.user.role == 'administrator' or request.session.user.role == 'organizer' %}
+                {% if request.session.user.role == 'organizer' %}
                 <button
                     hx-get="{% url 'events:event_edit' event.event_id %}"
                     hx-target="#modal-root"

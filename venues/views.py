@@ -96,6 +96,10 @@ def venue_list(request):
     if seating:
         venues = [v for v in venues if v["seating_type"].lower() == seating]
 
+    total_venue = len(venues)
+    reserved_seating = len([v for v in venues if v["seating_type"] == "reserved"])
+    total_capacity = f"{sum(v['capacity'] for v in venues):,}"
+
     return render(request, "venues/venue_list.html", {
         "venues": venues,
         "cities": sorted({v["city"] for v in DUMMY_VENUES}),
@@ -105,6 +109,9 @@ def venue_list(request):
         "selected_seating": request.GET.get("seating", ""),
         "user_role": _get_user_role(request),
         "can_manage": _can_manage_venue(request),
+        "total_venue": total_venue,
+        "reserved_seating": reserved_seating,
+        "total_capacity": total_capacity,
     })
 
 
