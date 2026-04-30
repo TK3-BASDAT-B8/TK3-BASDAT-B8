@@ -73,3 +73,46 @@ def login_required(view_func):
             return redirect("accounts:login")
         return view_func(request, *args, **kwargs)
     return wrapper
+
+def has_role(request, allowed_roles):
+    user = request.session.get("user")
+
+    if not user:
+        return False
+
+    if isinstance(allowed_roles, str):
+        allowed_roles = [allowed_roles]
+
+    role = user.get("role")
+
+    role_alias = {
+        "admin": "administrator",
+        "administrator": "administrator",
+        "organizer": "organizer",
+        "customer": "customer",
+    }
+
+    normalized_role = role_alias.get(role, role)
+
+    normalized_allowed_roles = [
+        role_alias.get(r, r) for r in allowed_roles
+    ]
+
+    return normalized_role in normalized_allowed_roles
+
+
+def role_required(*allowed_roles):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not get_current_user(request):
+                return redirect("accounts:login")
+
+            roles = allowed_roles[0] if len(allowed_roles) == 1 and isinstance(allowed_roles[0], (list, tuple)) else allowed_roles
+
+            if not has_role(request, roles):
+                return redirect("accounts:dashboard")
+
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
