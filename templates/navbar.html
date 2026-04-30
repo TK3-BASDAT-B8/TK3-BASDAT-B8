@@ -17,17 +17,19 @@
           <a href="#">Manajemen Tiket</a>
           <a href="{% url 'orders:order_list' %}">Semua Order</a>
           <a href="{% url 'promotions:promotion_list' %}">Promosi</a>
+
         {% elif user.role == "organizer" %}
           <a href="#">Event Saya</a>
           <a href="#">Manajemen Venue</a>
           <a href="#">Kategori Tiket</a>
           <a href="#">Manajemen Tiket</a>
           <a href="{% url 'orders:order_list' %}">Semua Order</a>
+
         {% else %}
           <a href="#">Tiket Saya</a>
-          <a href="#">Pesanan</a>
+          <a href="{% url 'orders:order_list' %}">Pesanan</a>
           <a href="#">Cari Event</a>
-          <a href="#">Promosi</a>
+          <a href="{% url 'promotions:promotion_list' %}">Promosi</a>
           <a href="#">Venue</a>
           <a href="#">Artis</a>
         {% endif %}

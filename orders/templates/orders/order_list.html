@@ -4,6 +4,26 @@
 
 {% block content %}
 <div class="space-y-6">
+  <div class="flex justify-between items-center">
+  <div>
+    {% if role == 'customer' %}
+      <h1 class="text-2xl font-bold text-gray-900">Daftar Order</h1>
+      <p class="text-sm text-gray-500">Riwayat pembelian tiket Anda</p>
+    {% elif role == 'organizer' %}
+      <h1 class="text-2xl font-bold text-gray-900">Daftar Order</h1>
+      <p class="text-sm text-gray-500">Order dari event yang Anda selenggarakan</p>
+    {% else %}
+      <h1 class="text-2xl font-bold text-gray-900">Daftar Order</h1>
+      <p class="text-sm text-gray-500">Semua order yang terdaftar pada sistem</p>
+    {% endif %}
+  </div>
+
+  {% if role == 'customer' %}
+    <a href="{% url 'orders:checkout' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+      + Buat Order
+    </a>
+  {% endif %}
+</div>
 
   <div class="flex justify-between items-center">
     <div>
@@ -156,7 +176,7 @@
       <form
         class="ajax-form space-y-4"
         method="post"
-        action="{% url 'orders:order_update' order.order_id %}?role={{ role }}"
+        action="{% url 'orders:order_update' order.order_id %}"
         data-modal="updateOrder{{ forloop.counter }}"
       >
         {% csrf_token %}
@@ -221,7 +241,7 @@
       <form
         class="ajax-form flex justify-end gap-3"
         method="post"
-        action="{% url 'orders:order_delete' order.order_id %}?role={{ role }}"
+        action="{% url 'orders:order_delete' order.order_id %}"
         data-modal="deleteOrder{{ forloop.counter }}"
       >
         {% csrf_token %}

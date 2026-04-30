@@ -3,32 +3,57 @@ from django.shortcuts import redirect
 
 DUMMY_USERS = [
     {
-        "username": "syafiq",
-        "password": "admin123",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7",
+        "username": "putri",
+        "password": "lastname",
         "role": "administrator",
-        "name": "Syafiq Faqih",
+        "name": "Putri",
         "email": "admin@tiktaktuk.com",
+        "phone": "-",
     },
+
+    # ORGANIZER
     {
-        "username": "eilannyst",
-        "password": "organizer123",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+        "username": "nadzim",
+        "password": "programmerhandal",
         "role": "organizer",
-        "name": "AElizabeth Meiulanny",
-        "email": "eilannyst.organizer@tiktaktuk.com",
+        "name": "PT Nada Penuh Cerita",
+        "email": "hello@nadapenuhcerta.com",
+        "phone": "08122222222",
+        "organizer_id": "40000000-0000-0000-0000-000000000001",
     },
     {
-        "username": "chazelnut",
-        "password": "customer123",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6",
+        "username": "gilangbiru",
+        "password": "bluespax",
+        "role": "organizer",
+        "name": "Sunset Wave Organizer",
+        "email": "contact@sunsetwave.id",
+        "phone": "08166666666",
+        "organizer_id": "40000000-0000-0000-0000-000000000002",
+    },
+
+    # CUSTOMER
+    {
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1",
+        "username": "syafiq",
+        "password": "panjangpanjangin",
         "role": "customer",
-        "name": "Rashika Maharani",
-        "email": "chazelnut.customer@tiktaktuk.com",
+        "name": "Syafiq Faqih",
+        "email": "syafiq@example.com",
+        "phone": "08123456789",
+        "customer_id": "dddddddd-dddd-dddd-dddd-ddddddddddd1",
     },
     {
-        "username": "nadzimmm",
-        "password": "customer456",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3",
+        "username": "elizabeth",
+        "password": "artisdepok",
         "role": "customer",
-        "name": "Kak Nadzim",
-        "email": "nadzimmm.customer@tiktaktuk.com",
+        "name": "Elizabeth Meilanny",
+        "email": "elizabeth@example.com",
+        "phone": "08133333333",
+        "customer_id": "dddddddd-dddd-dddd-dddd-ddddddddddd3",
     },
 ]
 

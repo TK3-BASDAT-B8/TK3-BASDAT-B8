@@ -70,7 +70,21 @@ MOCK_ROLE = 'admin'
 
 
 def get_mock_role(request):
-    return request.GET.get('role', MOCK_ROLE)
+    user = request.session.get("user")
+
+    if user:
+        role = user.get("role")
+
+        if role == "administrator":
+            return "admin"
+
+        if role == "organizer":
+            return "organizer"
+
+        if role == "customer":
+            return "customer"
+
+    return request.GET.get("role", MOCK_ROLE)
 
 
 def is_ajax(request):
