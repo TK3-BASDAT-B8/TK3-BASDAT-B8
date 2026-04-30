@@ -1,7 +1,7 @@
-// Modal helpers
-function openModal(id) {
-  document.getElementById(id).classList.remove('hidden');
-}
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-}
+document.addEventListener("click", function (event) {
+  const closeBtn = event.target.closest("[data-close-modal]");
+  if (closeBtn) {
+    const modalRoot = document.getElementById("modal-root");
+    if (modalRoot) modalRoot.innerHTML = "";
+  }
+});
