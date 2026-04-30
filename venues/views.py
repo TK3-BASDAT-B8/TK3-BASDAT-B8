@@ -1,156 +1,322 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from core.auth import login_required, role_required
-from core.db import fetch_all, fetch_one, execute_query
+from django.urls import reverse
+
+
+# Venue Dummy Data
+
+DUMMY_VENUES = [
+    {
+        "venue_id": "11111111-1111-1111-1111-111111111111",
+        "venue_name": "Jakarta Convention Center",
+        "capacity": 5000,
+        "address": "Jl. Gatot Subroto, Jakarta",
+        "city": "Jakarta",
+    }
+]
 
 
 def venue_list(request):
-    search = request.GET.get('search', '')
-    city = request.GET.get('city', '')
-    sql = "SELECT * FROM venue WHERE 1=1"
-    params = []
-    if search:
-        sql += " AND (venue_name ILIKE %s OR address ILIKE %s)"
-        params += [f'%{search}%', f'%{search}%']
-    if city:
-        sql += " AND city = %s"
-        params.append(city)
-    sql += " ORDER BY venue_name"
-    venues = fetch_all(sql, params)
-    cities = fetch_all("SELECT DISTINCT city FROM venue ORDER BY city")
-    return render(request, 'venues/venue_list.html', {'venues': venues, 'cities': cities, 'search': search, 'selected_city': city})
+    return render(request, "venues/venue_list.html", {
+        "venues": DUMMY_VENUES,
+        "cities": ["Jakarta"],
+        "search": "",
+        "selected_city": "",
+        "user_role": "administrator",
+    })
 
 
 def venue_partial(request):
-    venues = fetch_all("SELECT * FROM venue ORDER BY venue_name")
-    return render(request, 'venues/partials/venue_table.html', {'venues': venues})
+    return render(request, "venues/partials/venue_table.html", {
+        "venues": DUMMY_VENUES,
+        "user_role": "administrator",
+    })
 
 
-@role_required('administrator', 'organizer')
 def venue_create(request):
-    if request.method == 'POST':
-        name = request.POST.get('venue_name', '').strip()
-        capacity = request.POST.get('capacity', '').strip()
-        address = request.POST.get('address', '').strip()
-        city = request.POST.get('city', '').strip()
-        if not all([name, capacity, address, city]):
-            messages.error(request, 'Semua field wajib diisi.')
-        else:
-            execute_query(
-                "INSERT INTO venue (venue_id, venue_name, capacity, address, city) VALUES (gen_random_uuid(), %s, %s, %s, %s)",
-                [name, int(capacity), address, city]
-            )
-            messages.success(request, 'Venue berhasil ditambahkan.')
-            return redirect('venue_list')
-    return render(request, 'venues/venue_form.html', {'action': 'create'})
+    if request.method == "POST":
+        messages.success(request, "Venue berhasil ditambahkan. Ini masih dummy frontend.")
+        return redirect("venues:venue_list")
+
+    return render(request, "venues/venue_form.html", {
+        "action": "create",
+        "user_role": "administrator",
+    })
 
 
-@role_required('administrator', 'organizer')
 def venue_edit(request, venue_id):
-    venue = fetch_one("SELECT * FROM venue WHERE venue_id = %s", [venue_id])
-    if not venue:
-        return redirect('venue_list')
-    if request.method == 'POST':
-        name = request.POST.get('venue_name', '').strip()
-        capacity = request.POST.get('capacity', '').strip()
-        address = request.POST.get('address', '').strip()
-        city = request.POST.get('city', '').strip()
-        execute_query(
-            "UPDATE venue SET venue_name=%s, capacity=%s, address=%s, city=%s WHERE venue_id=%s",
-            [name, int(capacity), address, city, venue_id]
-        )
-        messages.success(request, 'Venue berhasil diperbarui.')
-        return redirect('venue_list')
-    return render(request, 'venues/venue_form.html', {'action': 'edit', 'venue': venue})
+    selected_venue = None
+
+    for venue in DUMMY_VENUES:
+        if str(venue["venue_id"]) == str(venue_id):
+            selected_venue = venue
+            break
+
+    if not selected_venue:
+        messages.error(request, "Venue tidak ditemukan.")
+        return redirect("venues:venue_list")
+
+    if request.method == "POST":
+        messages.success(request, "Venue berhasil diperbarui. Ini masih dummy frontend.")
+        return redirect("venues:venue_list")
+
+    return render(request, "venues/venue_form.html", {
+        "action": "edit",
+        "venue": selected_venue,
+        "user_role": "administrator",
+    })
 
 
-@role_required('administrator', 'organizer')
 def venue_delete(request, venue_id):
-    venue = fetch_one("SELECT * FROM venue WHERE venue_id = %s", [venue_id])
-    if not venue:
-        return redirect('venue_list')
-    if request.method == 'POST':
-        execute_query("DELETE FROM venue WHERE venue_id = %s", [venue_id])
-        messages.success(request, 'Venue berhasil dihapus.')
-        return redirect('venue_list')
-    return render(request, 'venues/venue_confirm_delete.html', {'venue': venue})
+    selected_venue = None
+
+    for venue in DUMMY_VENUES:
+        if str(venue["venue_id"]) == str(venue_id):
+            selected_venue = venue
+            break
+
+    if not selected_venue:
+        messages.error(request, "Venue tidak ditemukan.")
+        return redirect("venues:venue_list")
+
+    if request.method == "POST":
+        messages.success(request, "Venue berhasil dihapus. Ini masih dummy frontend.")
+        return redirect("venues:venue_list")
+
+    return render(request, "venues/venue_confirm_delete.html", {
+        "venue": selected_venue,
+        "user_role": "administrator",
+    })
 
 
-@login_required
+# Seat Dummy Data
+
+FILLED_SEAT_IDS = {
+    "00000000-0000-0000-0000-000000000001",
+    "00000000-0000-0000-0000-000000000002",
+    "00000000-0000-0000-0000-000000000003",
+    "00000000-0000-0000-0000-000000000004",
+    "00000000-0000-0000-0000-000000000005",
+    "00000000-0000-0000-0000-000000000006",
+    "00000000-0000-0000-0000-000000000007",
+    "00000000-0000-0000-0000-000000000008",
+    "00000000-0000-0000-0000-000000000009",
+    "00000000-0000-0000-0000-000000000010",
+}
+
+
+RAW_DUMMY_SEATS = [
+    ("00000000-0000-0000-0000-000000000001", "WVIP", "1", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000002", "WVIP", "2", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000003", "WVIP", "3", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000004", "WVIP", "4", "A", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000005", "WVIP", "5", "A", "11111111-1111-1111-1111-111111111111"),
+
+    ("00000000-0000-0000-0000-000000000006", "VIP", "1", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000007", "VIP", "2", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000008", "VIP", "3", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000009", "VIP", "4", "B", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000010", "VIP", "5", "B", "11111111-1111-1111-1111-111111111111"),
+
+    ("00000000-0000-0000-0000-000000000011", "REGULER", "1", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000012", "REGULER", "2", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000013", "REGULER", "3", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000014", "REGULER", "4", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000015", "REGULER", "5", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000016", "REGULER", "6", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000017", "REGULER", "7", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000018", "REGULER", "8", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000019", "REGULER", "9", "C", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000020", "REGULER", "10", "C", "11111111-1111-1111-1111-111111111111"),
+
+    ("00000000-0000-0000-0000-000000000021", "FESTIVAL", "1", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000022", "FESTIVAL", "2", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000023", "FESTIVAL", "3", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000024", "FESTIVAL", "4", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000025", "FESTIVAL", "5", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000026", "FESTIVAL", "6", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000027", "FESTIVAL", "7", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000028", "FESTIVAL", "8", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000029", "FESTIVAL", "9", "D", "11111111-1111-1111-1111-111111111111"),
+    ("00000000-0000-0000-0000-000000000030", "FESTIVAL", "10", "D", "11111111-1111-1111-1111-111111111111"),
+]
+
+
+def _build_dummy_seats():
+    venue_map = {venue["venue_id"]: venue["venue_name"] for venue in DUMMY_VENUES}
+    seats = []
+
+    for seat_id, section, seat_number, row_number, venue_id in RAW_DUMMY_SEATS:
+        seats.append({
+            "seat_id": seat_id,
+            "section": section,
+            "seat_number": seat_number,
+            "row_number": row_number,
+            "venue_id": venue_id,
+            "venue_name": venue_map.get(venue_id, "-"),
+            "status": "Terisi" if seat_id in FILLED_SEAT_IDS else "Tersedia",
+        })
+
+    return seats
+
+
+DUMMY_SEATS = _build_dummy_seats()
+
+
+def _seat_stats(seats):
+    return {
+        "total": len(seats),
+        "available": len([seat for seat in seats if seat["status"] == "Tersedia"]),
+        "filled": len([seat for seat in seats if seat["status"] == "Terisi"]),
+    }
+
+
+def _find_seat(seat_id):
+    for seat in DUMMY_SEATS:
+        if str(seat["seat_id"]) == str(seat_id):
+            return seat
+    return None
+
+
+def _get_seat_page_role(request):
+    role = request.GET.get("role", "admin").strip().lower()
+
+    if role in ["admin", "administrator"]:
+        return "admin"
+
+    if role == "organizer":
+        return "organizer"
+
+    if role == "customer":
+        return "customer"
+
+    return "admin"
+
+
+def _redirect_seat_list_with_role(page_role):
+    url = reverse("venues:seat_list")
+    return redirect(f"{url}?role={page_role}")
+
+
+def _seat_context(request, seats):
+    page_role = _get_seat_page_role(request)
+    can_manage_seat = page_role in ["admin", "organizer"]
+
+    return {
+        "seats": seats,
+        "venues": DUMMY_VENUES,
+        "stats": _seat_stats(seats),
+        "page_role": page_role,
+        "page_title": "Manajemen Kursi" if can_manage_seat else "Daftar Kursi",
+        "page_subtitle": (
+            "Kelola kursi dan denah tempat duduk venue"
+            if can_manage_seat
+            else "Lihat daftar kursi dan status ketersediaannya"
+        ),
+        "can_create_seat": can_manage_seat,
+        "can_manage_seat": can_manage_seat,
+        "user_role": "administrator" if page_role == "admin" else page_role,
+    }
+
+
 def seat_list(request):
-    seats = fetch_all("""
-        SELECT s.*, v.venue_name,
-               CASE WHEN hr.seat_id IS NOT NULL THEN 'Terisi' ELSE 'Tersedia' END AS status
-        FROM seat s
-        JOIN venue v ON s.venue_id = v.venue_id
-        LEFT JOIN has_relationship hr ON s.seat_id = hr.seat_id
-        ORDER BY v.venue_name, s.section, s.row_number, s.seat_number
-    """)
-    venues = fetch_all("SELECT * FROM venue ORDER BY venue_name")
-    return render(request, 'venues/seat_list.html', {'seats': seats, 'venues': venues})
+    q = request.GET.get("q", "").strip().lower()
+    venue = request.GET.get("venue", "").strip()
+
+    filtered_seats = DUMMY_SEATS
+
+    if q:
+        filtered_seats = [
+            seat for seat in filtered_seats
+            if q in seat["section"].lower()
+            or q in seat["row_number"].lower()
+            or q in seat["seat_number"].lower()
+            or q in seat["venue_name"].lower()
+        ]
+
+    if venue:
+        filtered_seats = [
+            seat for seat in filtered_seats
+            if seat["venue_id"] == venue
+        ]
+
+    return render(request, "venues/seat_list.html", _seat_context(request, filtered_seats))
 
 
 def seat_partial(request):
-    seats = fetch_all("""
-        SELECT s.*, v.venue_name,
-               CASE WHEN hr.seat_id IS NOT NULL THEN 'Terisi' ELSE 'Tersedia' END AS status
-        FROM seat s
-        JOIN venue v ON s.venue_id = v.venue_id
-        LEFT JOIN has_relationship hr ON s.seat_id = hr.seat_id
-        ORDER BY v.venue_name, s.section, s.row_number, s.seat_number
-    """)
-    return render(request, 'venues/partials/seat_table.html', {'seats': seats})
+    return render(request, "venues/partials/seat_table.html", _seat_context(request, DUMMY_SEATS))
 
 
-@role_required('administrator', 'organizer')
 def seat_create(request):
-    venues = fetch_all("SELECT * FROM venue ORDER BY venue_name")
-    if request.method == 'POST':
-        venue_id = request.POST.get('venue_id')
-        section = request.POST.get('section', '').strip()
-        row_number = request.POST.get('row_number', '').strip()
-        seat_number = request.POST.get('seat_number', '').strip()
-        if not all([venue_id, section, row_number, seat_number]):
-            messages.error(request, 'Semua field wajib diisi.')
-        else:
-            execute_query(
-                "INSERT INTO seat (seat_id, section, seat_number, row_number, venue_id) VALUES (gen_random_uuid(), %s, %s, %s, %s)",
-                [section, seat_number, row_number, venue_id]
-            )
-            messages.success(request, 'Kursi berhasil ditambahkan.')
-            return redirect('seat_list')
-    return render(request, 'venues/seat_form.html', {'action': 'create', 'venues': venues})
+    page_role = _get_seat_page_role(request)
+
+    if page_role not in ["admin", "organizer"]:
+        messages.error(request, "Hanya Admin atau Organizer yang dapat menambahkan kursi.")
+        return _redirect_seat_list_with_role(page_role)
+
+    if request.method == "POST":
+        messages.success(request, "Kursi berhasil ditambahkan. Ini masih dummy frontend.")
+        return _redirect_seat_list_with_role(page_role)
+
+    context = _seat_context(request, DUMMY_SEATS)
+    context.update({
+        "form_mode": "create",
+        "selected_seat": {},
+    })
+
+    return render(request, "venues/seat_form.html", context)
 
 
-@role_required('administrator', 'organizer')
 def seat_edit(request, seat_id):
-    seat = fetch_one("SELECT * FROM seat WHERE seat_id = %s", [seat_id])
-    venues = fetch_all("SELECT * FROM venue ORDER BY venue_name")
-    if not seat:
-        return redirect('seat_list')
-    if request.method == 'POST':
-        venue_id = request.POST.get('venue_id')
-        section = request.POST.get('section', '').strip()
-        row_number = request.POST.get('row_number', '').strip()
-        seat_number = request.POST.get('seat_number', '').strip()
-        execute_query(
-            "UPDATE seat SET section=%s, row_number=%s, seat_number=%s, venue_id=%s WHERE seat_id=%s",
-            [section, row_number, seat_number, venue_id, seat_id]
-        )
-        messages.success(request, 'Kursi berhasil diperbarui.')
-        return redirect('seat_list')
-    return render(request, 'venues/seat_form.html', {'action': 'edit', 'seat': seat, 'venues': venues})
+    page_role = _get_seat_page_role(request)
+
+    if page_role not in ["admin", "organizer"]:
+        messages.error(request, "Hanya Admin atau Organizer yang dapat mengubah kursi.")
+        return _redirect_seat_list_with_role(page_role)
+
+    selected_seat = _find_seat(seat_id)
+
+    if not selected_seat:
+        messages.error(request, "Kursi tidak ditemukan.")
+        return _redirect_seat_list_with_role(page_role)
+
+    if request.method == "POST":
+        messages.success(request, "Kursi berhasil diperbarui. Ini masih dummy frontend.")
+        return _redirect_seat_list_with_role(page_role)
+
+    context = _seat_context(request, DUMMY_SEATS)
+    context.update({
+        "form_mode": "edit",
+        "selected_seat": selected_seat,
+    })
+
+    return render(request, "venues/seat_form.html", context)
 
 
-@role_required('administrator', 'organizer')
 def seat_delete(request, seat_id):
-    assigned = fetch_one("SELECT seat_id FROM has_relationship WHERE seat_id = %s", [seat_id])
-    if assigned:
-        messages.error(request, 'Kursi ini sudah di-assign ke tiket dan tidak dapat dihapus.')
-        return redirect('seat_list')
-    seat = fetch_one("SELECT * FROM seat WHERE seat_id = %s", [seat_id])
-    if request.method == 'POST':
-        execute_query("DELETE FROM seat WHERE seat_id = %s", [seat_id])
-        messages.success(request, 'Kursi berhasil dihapus.')
-        return redirect('seat_list')
-    return render(request, 'venues/seat_confirm_delete.html', {'seat': seat})
+    page_role = _get_seat_page_role(request)
+
+    if page_role not in ["admin", "organizer"]:
+        messages.error(request, "Hanya Admin atau Organizer yang dapat menghapus kursi.")
+        return _redirect_seat_list_with_role(page_role)
+
+    selected_seat = _find_seat(seat_id)
+
+    if not selected_seat:
+        messages.error(request, "Kursi tidak ditemukan.")
+        return _redirect_seat_list_with_role(page_role)
+
+    if selected_seat["status"] == "Terisi":
+        messages.error(request, "Kursi ini sudah di-assign ke tiket dan tidak dapat dihapus.")
+        return _redirect_seat_list_with_role(page_role)
+
+    if request.method == "POST":
+        messages.success(request, "Kursi berhasil dihapus. Ini masih dummy frontend.")
+        return _redirect_seat_list_with_role(page_role)
+
+    context = _seat_context(request, DUMMY_SEATS)
+    context.update({
+        "selected_seat": selected_seat,
+    })
+
+    return render(request, "venues/seat_confirm_delete.html", context)

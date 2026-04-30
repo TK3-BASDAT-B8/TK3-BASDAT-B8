@@ -1,163 +1,290 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.utils import timezone
-from core.auth import login_required, role_required, has_role, get_current_user
-from core.db import fetch_all, fetch_one, execute_query
+from django.http import JsonResponse
+
+PAYMENT_STATUSES = ['PAID', 'PENDING', 'CANCELLED']
+
+ORDERS = [
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc001',
+        'order_date': '2026-04-28 10:00',
+        'payment_status': 'PAID',
+        'total_amount': 150000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+        'customer_name': 'Budi Santoso',
+        'event_name': 'Konser Melodi Senja',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc002',
+        'order_date': '2026-04-28 10:05',
+        'payment_status': 'PAID',
+        'total_amount': 200000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd2',
+        'customer_name': 'Siti Rahayu',
+        'event_name': 'Festival Seni Budaya',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc003',
+        'order_date': '2026-04-28 10:10',
+        'payment_status': 'PENDING',
+        'total_amount': 75000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd3',
+        'customer_name': 'Andi Wijaya',
+        'event_name': 'Malam Akustik Bandung',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc004',
+        'order_date': '2026-04-28 10:15',
+        'payment_status': 'PAID',
+        'total_amount': 300000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd4',
+        'customer_name': 'Dewi Putri',
+        'event_name': 'Konser Melodi Senja',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc005',
+        'order_date': '2026-04-28 10:20',
+        'payment_status': 'PAID',
+        'total_amount': 50000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd5',
+        'customer_name': 'Reza Firmansyah',
+        'event_name': 'Festival Seni Budaya',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc006',
+        'order_date': '2026-04-28 10:25',
+        'payment_status': 'CANCELLED',
+        'total_amount': 0.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd6',
+        'customer_name': 'Maya Indira',
+        'event_name': 'Malam Akustik Bandung',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc007',
+        'order_date': '2026-04-28 10:30',
+        'payment_status': 'PAID',
+        'total_amount': 120000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd1',
+        'customer_name': 'Budi Santoso',
+        'event_name': 'Festival Seni Budaya',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc008',
+        'order_date': '2026-04-28 10:35',
+        'payment_status': 'PENDING',
+        'total_amount': 90000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd2',
+        'customer_name': 'Siti Rahayu',
+        'event_name': 'Konser Melodi Senja',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc009',
+        'order_date': '2026-04-28 10:40',
+        'payment_status': 'PAID',
+        'total_amount': 45000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd3',
+        'customer_name': 'Andi Wijaya',
+        'event_name': 'Festival Seni Budaya',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc010',
+        'order_date': '2026-04-28 10:45',
+        'payment_status': 'PAID',
+        'total_amount': 250000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd4',
+        'customer_name': 'Dewi Putri',
+        'event_name': 'Malam Akustik Bandung',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc011',
+        'order_date': '2026-04-28 10:50',
+        'payment_status': 'PAID',
+        'total_amount': 100000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd5',
+        'customer_name': 'Reza Firmansyah',
+        'event_name': 'Konser Melodi Senja',
+    },
+    {
+        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc012',
+        'order_date': '2026-04-28 10:55',
+        'payment_status': 'PENDING',
+        'total_amount': 30000.00,
+        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd6',
+        'customer_name': 'Maya Indira',
+        'event_name': 'Festival Seni Budaya',
+    },
+]
+
+MOCK_ROLE = 'admin'
+MOCK_CUSTOMER_ID = 'dddddddd-dddd-dddd-dddd-ddddddddddd1'
+ORGANIZER_EVENT_NAMES = ['Konser Melodi Senja', 'Festival Seni Budaya']
 
 
-@login_required
+def get_role(request):
+    return request.GET.get('role', MOCK_ROLE)
+
+
+def is_ajax(request):
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
+def redirect_with_role(role):
+    return redirect(f'/orders/?role={role}')
+
+
+def format_rupiah(amount):
+    return f"Rp {amount:,.0f}".replace(",", ".")
+
+
 def order_list(request):
-    user = get_current_user(request)
-    search = request.GET.get('search', '')
-    status_filter = request.GET.get('status', '')
+    role = get_role(request)
 
-    if has_role(request, 'administrator'):
-        sql = """
-            SELECT o.*, c.full_name FROM "order" o
-            JOIN customer c ON o.customer_id = c.customer_id WHERE 1=1
-        """
-        params = []
-    elif has_role(request, 'organizer'):
-        org = fetch_one("SELECT organizer_id FROM organizer WHERE user_id = %s", [user['user_id']])
-        sql = """
-            SELECT DISTINCT o.*, c.full_name FROM "order" o
-            JOIN customer c ON o.customer_id = c.customer_id
-            JOIN ticket t ON t.torder_id = o.order_id
-            JOIN ticket_category tc ON t.tcategory_id = tc.category_id
-            JOIN event e ON tc.tevent_id = e.event_id
-            WHERE e.organizer_id = %s
-        """
-        params = [org['organizer_id']] if org else []
-    else:
-        cust = fetch_one("SELECT customer_id FROM customer WHERE user_id = %s", [user['user_id']])
-        sql = """
-            SELECT o.*, c.full_name FROM "order" o
-            JOIN customer c ON o.customer_id = c.customer_id
-            WHERE o.customer_id = %s
-        """
-        params = [cust['customer_id']] if cust else []
+    role_orders = list(ORDERS)
 
+    if role == 'customer':
+        role_orders = [o for o in role_orders if o['customer_id'] == MOCK_CUSTOMER_ID]
+    elif role == 'organizer':
+        role_orders = [o for o in role_orders if o['event_name'] in ORGANIZER_EVENT_NAMES]
+
+    orders = list(role_orders)
+
+    filter_status = request.GET.get('status', 'all')
+    if filter_status in PAYMENT_STATUSES:
+        orders = [o for o in orders if o['payment_status'] == filter_status]
+
+    search = request.GET.get('q', '').strip().lower()
     if search:
-        sql += " AND CAST(o.order_id AS TEXT) ILIKE %s"
-        params.append(f'%{search}%')
-    if status_filter:
-        sql += " AND o.payment_status = %s"
-        params.append(status_filter)
+        orders = [
+            o for o in orders
+            if search in o['order_id'].lower()
+            or search in o['customer_name'].lower()
+            or search in o['event_name'].lower()
+        ]
 
-    sql += " ORDER BY o.order_date DESC"
-    orders = fetch_all(sql, params)
+    total_orders = len(role_orders)
+    total_paid = sum(1 for o in role_orders if o['payment_status'] == 'PAID')
+    total_pending = sum(1 for o in role_orders if o['payment_status'] == 'PENDING')
+    total_revenue = sum(o['total_amount'] for o in role_orders if o['payment_status'] == 'PAID')
 
-    stats = {
-        'total': len(orders),
-        'paid': sum(1 for o in orders if o['payment_status'] == 'Paid'),
-        'pending': sum(1 for o in orders if o['payment_status'] == 'Pending'),
-        'revenue': sum(o['total_amount'] for o in orders if o['payment_status'] == 'Paid'),
-    }
     return render(request, 'orders/order_list.html', {
-        'orders': orders, 'stats': stats, 'search': search, 'status_filter': status_filter
+        'orders': orders,
+        'role': role,
+        'payment_statuses': PAYMENT_STATUSES,
+        'filter_status': filter_status,
+        'search': search,
+        'total_orders': total_orders,
+        'total_paid': total_paid,
+        'total_pending': total_pending,
+        'total_revenue_display': format_rupiah(total_revenue),
     })
 
 
-def order_partial(request):
-    orders = fetch_all('SELECT * FROM "order" ORDER BY order_date DESC')
-    return render(request, 'orders/partials/order_table.html', {'orders': orders})
-
-
-@role_required('customer')
-def checkout(request, event_id):
-    event = fetch_one("""
-        SELECT e.*, v.venue_name FROM event e
-        JOIN venue v ON e.venue_id = v.venue_id WHERE e.event_id = %s
-    """, [event_id])
-    categories = fetch_all(
-        "SELECT * FROM ticket_category WHERE tevent_id = %s ORDER BY price DESC", [event_id]
-    )
-    promotions = fetch_all(
-        "SELECT * FROM promotion WHERE end_date >= CURRENT_DATE ORDER BY promo_code"
-    )
-    seats = fetch_all("""
-        SELECT s.* FROM seat s
-        WHERE s.venue_id = %s
-        AND s.seat_id NOT IN (SELECT seat_id FROM has_relationship)
-        ORDER BY s.section, s.row_number, s.seat_number
-    """, [event['venue_id']])
+def checkout(request):
+    role = get_role(request)
 
     if request.method == 'POST':
-        user = get_current_user(request)
-        cust = fetch_one("SELECT customer_id FROM customer WHERE user_id = %s", [user['user_id']])
-        category_id = request.POST.get('category_id')
-        quantity = int(request.POST.get('quantity', 1))
-        seat_ids = request.POST.getlist('seat_ids')
-        promo_code = request.POST.get('promo_code', '').strip()
+        if is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'message': 'Order berhasil dibuat! Status pembayaran: PENDING.'
+            })
 
-        if quantity < 1 or quantity > 10:
-            messages.error(request, 'Jumlah tiket harus antara 1 dan 10.')
-            return redirect('checkout', event_id=event_id)
+        messages.success(request, 'Order berhasil dibuat! Status pembayaran: PENDING.')
+        return redirect_with_role(role)
 
-        category = fetch_one("SELECT * FROM ticket_category WHERE category_id = %s", [category_id])
-        total = float(category['price']) * quantity
-
-        promo = None
-        if promo_code:
-            promo = fetch_one(
-                "SELECT * FROM promotion WHERE promo_code = %s AND start_date <= CURRENT_DATE AND end_date >= CURRENT_DATE",
-                [promo_code]
-            )
-            if promo:
-                if promo['discount_type'] == 'PERCENTAGE':
-                    total -= total * float(promo['discount_value']) / 100
-                else:
-                    total -= float(promo['discount_value'])
-                total = max(0, total)
-            else:
-                messages.error(request, 'Kode promo tidak valid atau sudah kadaluarsa.')
-                return redirect('checkout', event_id=event_id)
-
-        import uuid as _uuid
-        order_id = str(_uuid.uuid4())
-        execute_query(
-            'INSERT INTO "order" (order_id, order_date, payment_status, total_amount, customer_id) VALUES (%s, %s, %s, %s, %s)',
-            [order_id, timezone.now(), 'Pending', total, cust['customer_id']]
-        )
-
-        if promo:
-            execute_query(
-                "INSERT INTO order_promotion (order_promotion_id, promotion_id, order_id) VALUES (gen_random_uuid(), %s, %s)",
-                [promo['promotion_id'], order_id]
-            )
-
-        messages.success(request, f'Pesanan berhasil dibuat! Total: Rp {total:,.0f}')
-        return redirect('order_list')
+    event = {
+        'event_title': 'Konser Melodi Senja',
+        'event_datetime': '2026-05-15 19:00',
+        'venue_name': 'Jakarta Convention Center',
+        'artists': ['Fourtwnty', 'Hindia'],
+        'categories': [
+            {'category_id': 'cat-001', 'category_name': 'WVIP', 'price': 1500000, 'quota': 50, 'used': 3},
+            {'category_id': 'cat-002', 'category_name': 'VIP', 'price': 750000, 'quota': 150, 'used': 30},
+            {'category_id': 'cat-003', 'category_name': 'Category 1', 'price': 450000, 'quota': 300, 'used': 100},
+        ],
+        'has_reserved_seating': True,
+        'seats': [
+            {'seat_id': 'seat-001', 'section': 'VIP', 'row_number': 'B', 'seat_number': '1'},
+            {'seat_id': 'seat-002', 'section': 'VIP', 'row_number': 'B', 'seat_number': '2'},
+            {'seat_id': 'seat-003', 'section': 'Category 1', 'row_number': 'C', 'seat_number': '5'},
+        ],
+    }
 
     return render(request, 'orders/checkout.html', {
-        'event': event, 'categories': categories,
-        'promotions': promotions, 'seats': seats
+        'role': role,
+        'event': event,
     })
 
 
-@role_required('administrator')
-def order_edit(request, order_id):
-    order = fetch_one('SELECT * FROM "order" WHERE order_id = %s', [order_id])
-    if not order:
-        return redirect('order_list')
+def order_update(request, order_id):
+    role = get_role(request)
+
+    if role != 'admin':
+        if is_ajax(request):
+            return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat update order.'}, status=403)
+
+        messages.error(request, 'Hanya admin yang dapat update order.')
+        return redirect_with_role(role)
+
     if request.method == 'POST':
-        status = request.POST.get('payment_status')
-        execute_query(
-            'UPDATE "order" SET payment_status = %s WHERE order_id = %s',
-            [status, order_id]
-        )
-        messages.success(request, 'Status order berhasil diperbarui.')
-        return redirect('order_list')
-    return render(request, 'orders/order_update.html', {'order': order})
+        new_status = request.POST.get('payment_status')
+
+        found = False
+        for order in ORDERS:
+            if order['order_id'] == order_id:
+                order['payment_status'] = new_status
+                found = True
+                break
+
+        if not found:
+            if is_ajax(request):
+                return JsonResponse({'success': False, 'message': 'Order tidak ditemukan.'}, status=404)
+
+            messages.error(request, 'Order tidak ditemukan.')
+            return redirect_with_role(role)
+
+        if is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'message': f'Order berhasil diupdate menjadi {new_status}.'
+            })
+
+        messages.success(request, f'Order berhasil diupdate menjadi {new_status}.')
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)
 
 
-@role_required('administrator')
 def order_delete(request, order_id):
-    order = fetch_one('SELECT * FROM "order" WHERE order_id = %s', [order_id])
-    if not order:
-        return redirect('order_list')
+    role = get_role(request)
+
+    if role != 'admin':
+        if is_ajax(request):
+            return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat delete order.'}, status=403)
+
+        messages.error(request, 'Hanya admin yang dapat delete order.')
+        return redirect_with_role(role)
+
     if request.method == 'POST':
-        execute_query('DELETE FROM "order" WHERE order_id = %s', [order_id])
+        global ORDERS
+
+        before_count = len(ORDERS)
+        ORDERS = [order for order in ORDERS if order['order_id'] != order_id]
+
+        if len(ORDERS) == before_count:
+            if is_ajax(request):
+                return JsonResponse({'success': False, 'message': 'Order tidak ditemukan.'}, status=404)
+
+            messages.error(request, 'Order tidak ditemukan.')
+            return redirect_with_role(role)
+
+        if is_ajax(request):
+            return JsonResponse({
+                'success': True,
+                'message': 'Order berhasil dihapus.'
+            })
+
         messages.success(request, 'Order berhasil dihapus.')
-        return redirect('order_list')
-    return render(request, 'orders/order_confirm_delete.html', {'order': order})
+        return redirect_with_role(role)
+
+    return redirect_with_role(role)

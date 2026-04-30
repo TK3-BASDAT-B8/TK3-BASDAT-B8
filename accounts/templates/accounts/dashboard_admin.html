@@ -1,8 +1,17 @@
-{% extends 'base.html' %}
-{% block title %}TikTakTuk{% endblock %}
+{% extends "base.html" %}
 {% block content %}
-<div class="max-w-xl mx-auto">
-  <h1 class="text-2xl font-bold text-gray-800 mb-6"><!-- TODO: page title --></h1>
-  <!-- TODO: implement this template -->
+<section class="bg-slate-900 text-white rounded-2xl p-6 mb-6 flex justify-between">
+  <div>
+    <h1 class="text-2xl font-bold">System Console</h1>
+    <p>Panel administrator TikTakTuk</p>
+  </div>
+  <span class="bg-white text-slate-900 px-3 py-1 rounded-full h-fit">Admin</span>
+</section>
+
+<div class="grid grid-cols-4 gap-4">
+  <div class="bg-white p-5 rounded-xl shadow"><p>Total User</p><h2 class="text-2xl font-bold">2,543</h2></div>
+  <div class="bg-white p-5 rounded-xl shadow"><p>Total Event</p><h2 class="text-2xl font-bold">156</h2></div>
+  <div class="bg-white p-5 rounded-xl shadow"><p>Revenue</p><h2 class="text-2xl font-bold">Rp 52.4M</h2></div>
+  <div class="bg-white p-5 rounded-xl shadow"><p>Pending Order</p><h2 class="text-2xl font-bold">3</h2></div>
 </div>
 {% endblock %}
