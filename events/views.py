@@ -1,133 +1,226 @@
-from django.shortcuts import render, redirect
+from datetime import datetime
+
 from django.contrib import messages
-from core.auth import login_required, role_required, has_role, get_current_user
-from core.db import fetch_all, fetch_one, execute_query
+from django.shortcuts import render, redirect
+
+from venues.views import DUMMY_VENUES
+
+DUMMY_ORGANIZERS = [
+    {
+        "organizer_id": "40000000-0000-0000-0000-000000000001",
+        "organizer_name": "PT Nada Penuh Cerita",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2",
+    },
+    {
+        "organizer_id": "40000000-0000-0000-0000-000000000002",
+        "organizer_name": "Sunset Wave Organizer",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6",
+    },
+    {
+        "organizer_id": "40000000-0000-0000-0000-000000000003",
+        "organizer_name": "Ruang Bunyi",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa9",
+    },
+    {
+        "organizer_id": "40000000-0000-0000-0000-000000000004",
+        "organizer_name": "Bright Stage ID",
+        "user_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa12",
+    },
+]
+
+DUMMY_EVENTS = [
+    {
+        "event_id": "60000000-0000-0000-0000-000000000001",
+        "event_title": "Jakarta Music Fest 2026",
+        "event_datetime": datetime(2026, 5, 10, 19, 0),
+        "venue_id": "11111111-1111-1111-1111-111111111112",
+        "venue_name": "Istora Senayan",
+        "organizer_id": "40000000-0000-0000-0000-000000000001",
+        "organizer_name": "PT Nada Penuh Cerita",
+        "performers": ["NOAH", "Tulus", "RAN"],
+        "ticket_categories": [
+            {"name": "WVIP", "price": 1500000},
+            {"name": "VIP", "price": 900000},
+            {"name": "Regular", "price": 350000},
+        ],
+        "image": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1200&q=80",
+        "description": "Festival musik malam hari dengan line up besar.",
+    },
+    {
+        "event_id": "60000000-0000-0000-0000-000000000002",
+        "event_title": "Bali Summer Sound",
+        "event_datetime": datetime(2026, 6, 1, 18, 30),
+        "venue_id": "11111111-1111-1111-1111-111111111113",
+        "venue_name": "Bali Nusa Dua Convention Center",
+        "organizer_id": "40000000-0000-0000-0000-000000000002",
+        "organizer_name": "Sunset Wave Organizer",
+        "performers": ["Nadin Amizah", "Pamungkas"],
+        "ticket_categories": [
+            {"name": "VIP", "price": 1250000},
+            {"name": "Festival", "price": 500000},
+        ],
+        "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80",
+        "description": "Konser santai di suasana tropis Bali.",
+    },
+    {
+        "event_id": "60000000-0000-0000-0000-000000000003",
+        "event_title": "Indie Night Medan",
+        "event_datetime": datetime(2026, 6, 12, 20, 0),
+        "venue_id": "11111111-1111-1111-1111-111111111114",
+        "venue_name": "Lapangan Merdeka Medan",
+        "organizer_id": "40000000-0000-0000-0000-000000000003",
+        "organizer_name": "Ruang Bunyi",
+        "performers": ["Hindia", "Juicy Luicy"],
+        "ticket_categories": [
+            {"name": "Early Bird", "price": 175000},
+            {"name": "Festival", "price": 250000},
+        ],
+        "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80",
+        "description": "Panggung musik indie untuk penikmat lagu malam.",
+    },
+    {
+        "event_id": "60000000-0000-0000-0000-000000000004",
+        "event_title": "Classic Harmony Jakarta",
+        "event_datetime": datetime(2026, 7, 3, 18, 0),
+        "venue_id": "11111111-1111-1111-1111-111111111115",
+        "venue_name": "Gedung Kesenian Jakarta",
+        "organizer_id": "40000000-0000-0000-0000-000000000001",
+        "organizer_name": "PT Nada Penuh Cerita",
+        "performers": ["Maliq & D'Essentials"],
+        "ticket_categories": [
+            {"name": "Premium", "price": 1100000},
+            {"name": "Regular", "price": 450000},
+        ],
+        "image": "https://images.unsplash.com/photo-1487180144351-b8472da7d491?auto=format&fit=crop&w=1200&q=80",
+        "description": "Acara musik elegan dengan atmosfer intim.",
+    },
+    {
+        "event_id": "60000000-0000-0000-0000-000000000005",
+        "event_title": "Campus Festival Purwokerto",
+        "event_datetime": datetime(2026, 7, 20, 16, 0),
+        "venue_id": "11111111-1111-1111-1111-111111111111",
+        "venue_name": "Jakarta Convention Center",
+        "organizer_id": "40000000-0000-0000-0000-000000000004",
+        "organizer_name": "Bright Stage ID",
+        "performers": ["RAN", "Nadin Amizah"],
+        "ticket_categories": [
+            {"name": "Festival", "price": 200000},
+            {"name": "VIP", "price": 600000},
+        ],
+        "image": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80",
+        "description": "Festival kampus dengan energi penuh dan harga ramah mahasiswa.",
+    },
+    {
+        "event_id": "60000000-0000-0000-0000-000000000006",
+        "event_title": "Road To Year End Concert",
+        "event_datetime": datetime(2026, 12, 20, 19, 30),
+        "venue_id": "11111111-1111-1111-1111-111111111112",
+        "venue_name": "Istora Senayan",
+        "organizer_id": "40000000-0000-0000-0000-000000000002",
+        "organizer_name": "Sunset Wave Organizer",
+        "performers": ["Tulus", "Pamungkas", "NOAH"],
+        "ticket_categories": [
+            {"name": "Platinum", "price": 1750000},
+            {"name": "Regular", "price": 400000},
+        ],
+        "image": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80",
+        "description": "Penutup tahun dengan konser besar dan panggung megah.",
+    },
+]
+
+
+def _can_manage(request):
+    user_data = request.session.get("user", {})
+    role = user_data.get("role", "")
+    return role in ["administrator", "organizer"]
+
+
+def _find_event(event_id):
+    for event in DUMMY_EVENTS:
+        if str(event["event_id"]) == str(event_id):
+            return event
+    return None
 
 
 def event_list(request):
-    search = request.GET.get('search', '')
-    venue_id = request.GET.get('venue_id', '')
-    artist_id = request.GET.get('artist_id', '')
-    user = get_current_user(request)
+    q = request.GET.get("q", "").strip().lower()
+    venue = request.GET.get("venue", "").strip().lower()
 
-    sql = """
-        SELECT DISTINCT e.*, v.venue_name, o.organizer_name
-        FROM event e
-        JOIN venue v ON e.venue_id = v.venue_id
-        JOIN organizer o ON e.organizer_id = o.organizer_id
-        LEFT JOIN event_artist ea ON e.event_id = ea.event_id
-        WHERE 1=1
-    """
-    params = []
+    events = DUMMY_EVENTS[:]
 
-    if user and has_role(request, 'organizer') and not has_role(request, 'administrator'):
-        org = fetch_one("SELECT organizer_id FROM organizer WHERE user_id = %s", [user['user_id']])
-        if org:
-            sql += " AND e.organizer_id = %s"
-            params.append(org['organizer_id'])
+    if q:
+        events = [
+            e for e in events
+            if q in e["event_title"].lower()
+            or any(q in p.lower() for p in e["performers"])
+            or q in e["description"].lower()
+        ]
 
-    if search:
-        sql += " AND (e.event_title ILIKE %s OR ea.artist_id IN (SELECT artist_id FROM artist WHERE name ILIKE %s))"
-        params += [f'%{search}%', f'%{search}%']
-    if venue_id:
-        sql += " AND e.venue_id = %s"
-        params.append(venue_id)
-    if artist_id:
-        sql += " AND ea.artist_id = %s"
-        params.append(artist_id)
+    if venue:
+        events = [e for e in events if e["venue_name"].lower() == venue]
 
-    sql += " ORDER BY e.event_datetime"
-    events = fetch_all(sql, params)
-    venues = fetch_all("SELECT venue_id, venue_name FROM venue ORDER BY venue_name")
-    artists = fetch_all("SELECT artist_id, name FROM artist ORDER BY name")
-    return render(request, 'events/event_list.html', {
-        'events': events, 'venues': venues, 'artists': artists,
-        'search': search, 'selected_venue': venue_id, 'selected_artist': artist_id
+    return render(request, "events/event_list.html", {
+        "events": sorted(events, key=lambda x: x["event_datetime"]),
+        "venues": sorted({v["venue_name"] for v in DUMMY_VENUES}),
+        "q": request.GET.get("q", ""),
+        "selected_venue": request.GET.get("venue", ""),
+        "can_manage": _can_manage(request),
     })
-
-
-def event_partial(request):
-    events = fetch_all("""
-        SELECT e.*, v.venue_name FROM event e
-        JOIN venue v ON e.venue_id = v.venue_id ORDER BY e.event_datetime
-    """)
-    return render(request, 'events/partials/event_cards.html', {'events': events})
 
 
 def event_detail(request, event_id):
-    event = fetch_one("""
-        SELECT e.*, v.venue_name, v.city, o.organizer_name
-        FROM event e
-        JOIN venue v ON e.venue_id = v.venue_id
-        JOIN organizer o ON e.organizer_id = o.organizer_id
-        WHERE e.event_id = %s
-    """, [event_id])
-    artists = fetch_all("""
-        SELECT a.name, a.genre, ea.role FROM artist a
-        JOIN event_artist ea ON a.artist_id = ea.artist_id
-        WHERE ea.event_id = %s
-    """, [event_id])
-    categories = fetch_all(
-        "SELECT * FROM ticket_category WHERE tevent_id = %s ORDER BY price DESC", [event_id]
-    )
-    return render(request, 'events/event_detail.html', {
-        'event': event, 'artists': artists, 'categories': categories
+    event = _find_event(event_id)
+    if not event:
+        messages.error(request, "Event tidak ditemukan.")
+        return redirect("events:event_list")
+
+    return render(request, "events/event_detail.html", {
+        "event": event,
+        "can_manage": _can_manage(request),
     })
 
 
-@role_required('administrator', 'organizer')
 def event_create(request):
-    venues = fetch_all("SELECT * FROM venue ORDER BY venue_name")
-    artists = fetch_all("SELECT * FROM artist ORDER BY name")
-    if request.method == 'POST':
-        title = request.POST.get('event_title', '').strip()
-        event_dt = request.POST.get('event_datetime', '')
-        venue_id = request.POST.get('venue_id')
-        artist_ids = request.POST.getlist('artist_ids')
-        description = request.POST.get('description', '')
-        user = get_current_user(request)
-        org = fetch_one("SELECT organizer_id FROM organizer WHERE user_id = %s", [user['user_id']])
-        if not org:
-            messages.error(request, 'Akun anda tidak terdaftar sebagai organizer.')
-            return redirect('event_list')
-        event_id = None
-        from core.db import fetch_one as fo
-        execute_query(
-            "INSERT INTO event (event_id, event_datetime, event_title, venue_id, organizer_id) VALUES (gen_random_uuid(), %s, %s, %s, %s)",
-            [event_dt, title, venue_id, org['organizer_id']]
-        )
-        new_event = fetch_one(
-            "SELECT event_id FROM event WHERE event_title = %s AND organizer_id = %s ORDER BY event_datetime DESC LIMIT 1",
-            [title, org['organizer_id']]
-        )
-        for aid in artist_ids:
-            execute_query(
-                "INSERT INTO event_artist (event_id, artist_id, role) VALUES (%s, %s, %s)",
-                [new_event['event_id'], aid, 'Performer']
-            )
-        messages.success(request, 'Event berhasil dibuat.')
-        return redirect('event_list')
-    return render(request, 'events/event_form.html', {'action': 'create', 'venues': venues, 'artists': artists})
+    if not _can_manage(request):
+        messages.error(request, "Kamu tidak punya akses untuk membuat event.")
+        return redirect("events:event_list")
+
+    if request.method == "POST":
+        messages.success(request, "Event berhasil dibuat. Ini masih dummy frontend.")
+        return redirect("events:event_list")
+
+    return render(request, "events/partials/event_modal.html", {
+        "mode": "create",
+        "event": None,
+        "venues": DUMMY_VENUES,
+        "organizers": DUMMY_ORGANIZERS,
+        "performers_text": "",
+        "ticket_categories_text": "",
+    })
 
 
-@role_required('administrator', 'organizer')
 def event_edit(request, event_id):
-    event = fetch_one("SELECT * FROM event WHERE event_id = %s", [event_id])
-    venues = fetch_all("SELECT * FROM venue ORDER BY venue_name")
-    artists = fetch_all("SELECT * FROM artist ORDER BY name")
+    if not _can_manage(request):
+        messages.error(request, "Kamu tidak punya akses untuk mengubah event.")
+        return redirect("events:event_list")
+
+    event = _find_event(event_id)
     if not event:
-        return redirect('event_list')
-    if request.method == 'POST':
-        title = request.POST.get('event_title', '').strip()
-        event_dt = request.POST.get('event_datetime', '')
-        venue_id = request.POST.get('venue_id')
-        execute_query(
-            "UPDATE event SET event_title=%s, event_datetime=%s, venue_id=%s WHERE event_id=%s",
-            [title, event_dt, venue_id, event_id]
-        )
-        messages.success(request, 'Event berhasil diperbarui.')
-        return redirect('event_list')
-    return render(request, 'events/event_form.html', {'action': 'edit', 'event': event, 'venues': venues, 'artists': artists})
+        messages.error(request, "Event tidak ditemukan.")
+        return redirect("events:event_list")
+
+    if request.method == "POST":
+        messages.success(request, "Event berhasil diperbarui. Ini masih dummy frontend.")
+        return redirect("events:event_list")
+
+    return render(request, "events/partials/event_modal.html", {
+        "mode": "edit",
+        "event": event,
+        "venues": DUMMY_VENUES,
+        "organizers": DUMMY_ORGANIZERS,
+        "performers_text": ", ".join(event["performers"]),
+        "ticket_categories_text": ", ".join([c["name"] for c in event["ticket_categories"]]),
+    })
 
 
 def artist_list(request):

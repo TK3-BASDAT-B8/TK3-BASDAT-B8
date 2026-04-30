@@ -3,7 +3,9 @@ from django.contrib import messages
 from django.urls import reverse
 
 
-# Venue Dummy Data
+# =========================================================
+# VENUE DUMMY DATA
+# =========================================================
 
 DUMMY_VENUES = [
     {
@@ -12,48 +14,141 @@ DUMMY_VENUES = [
         "capacity": 5000,
         "address": "Jl. Gatot Subroto, Jakarta",
         "city": "Jakarta",
-    }
+        "seating_type": "reserved",
+    },
+    {
+        "venue_id": "11111111-1111-1111-1111-111111111112",
+        "venue_name": "Istora Senayan",
+        "capacity": 12000,
+        "address": "Jl. Pintu Satu Senayan, Gelora",
+        "city": "Jakarta",
+        "seating_type": "reserved",
+    },
+    {
+        "venue_id": "11111111-1111-1111-1111-111111111113",
+        "venue_name": "Bali Nusa Dua Convention Center",
+        "capacity": 8000,
+        "address": "Kawasan Pariwisata Nusa Dua",
+        "city": "Bali",
+        "seating_type": "reserved",
+    },
+    {
+        "venue_id": "11111111-1111-1111-1111-111111111114",
+        "venue_name": "Lapangan Merdeka Medan",
+        "capacity": 15000,
+        "address": "Jl. Pulau Pinang",
+        "city": "Medan",
+        "seating_type": "free",
+    },
+    {
+        "venue_id": "11111111-1111-1111-1111-111111111115",
+        "venue_name": "Gedung Kesenian Jakarta",
+        "capacity": 2000,
+        "address": "Jl. Gedung Kesenian No.1",
+        "city": "Jakarta",
+        "seating_type": "reserved",
+    },
 ]
 
 
+def _get_user_role(request):
+    user_data = request.session.get("user", {})
+    if user_data:
+        return user_data.get("role", "guest")
+    roles = request.session.get("roles", [])
+    if "administrator" in roles:
+        return "administrator"
+    if "organizer" in roles:
+        return "organizer"
+    if "customer" in roles:
+        return "customer"
+    return "guest"
+
+
+def _can_manage_venue(request):
+   role = _get_user_role(request)
+   return role in ["administrator", "organizer"]
+
+
+def _find_venue(venue_id):
+    for venue in DUMMY_VENUES:
+        if str(venue["venue_id"]) == str(venue_id):
+            return venue
+    return None
+
+
 def venue_list(request):
+    q = request.GET.get("q", "").strip().lower()
+    city = request.GET.get("city", "").strip().lower()
+    seating = request.GET.get("seating", "").strip().lower()
+
+    venues = DUMMY_VENUES[:]
+
+    if q:
+        venues = [
+            v for v in venues
+            if q in v["venue_name"].lower() or q in v["address"].lower()
+        ]
+
+    if city:
+        venues = [v for v in venues if v["city"].lower() == city]
+
+    if seating:
+        venues = [v for v in venues if v["seating_type"].lower() == seating]
+
+    total_venue = len(venues)
+    reserved_seating = len([v for v in venues if v["seating_type"] == "reserved"])
+    total_capacity = f"{sum(v['capacity'] for v in venues):,}"
+
     return render(request, "venues/venue_list.html", {
-        "venues": DUMMY_VENUES,
-        "cities": ["Jakarta"],
-        "search": "",
-        "selected_city": "",
-        "user_role": "administrator",
+        "venues": venues,
+        "cities": sorted({v["city"] for v in DUMMY_VENUES}),
+        "search": request.GET.get("q", ""),
+        "q": request.GET.get("q", ""),
+        "selected_city": request.GET.get("city", ""),
+        "selected_seating": request.GET.get("seating", ""),
+        "user_role": _get_user_role(request),
+        "can_manage": _can_manage_venue(request),
+        "total_venue": total_venue,
+        "reserved_seating": reserved_seating,
+        "total_capacity": total_capacity,
     })
 
 
 def venue_partial(request):
     return render(request, "venues/partials/venue_table.html", {
         "venues": DUMMY_VENUES,
-        "user_role": "administrator",
+        "user_role": _get_user_role(request),
+        "can_manage": _can_manage_venue(request),
     })
 
 
 def venue_create(request):
+    if not _can_manage_venue(request):
+        messages.error(request, "Kamu tidak punya akses untuk menambah venue.")
+        return redirect("venues:venue_list")
+
     if request.method == "POST":
         messages.success(request, "Venue berhasil ditambahkan. Ini masih dummy frontend.")
         return redirect("venues:venue_list")
 
     return render(request, "venues/venue_form.html", {
         "action": "create",
-        "user_role": "administrator",
+        "user_role": _get_user_role(request),
+        "can_manage": True,
+        "venue": None,
     })
 
 
 def venue_edit(request, venue_id):
-    selected_venue = None
-
-    for venue in DUMMY_VENUES:
-        if str(venue["venue_id"]) == str(venue_id):
-            selected_venue = venue
-            break
+    selected_venue = _find_venue(venue_id)
 
     if not selected_venue:
         messages.error(request, "Venue tidak ditemukan.")
+        return redirect("venues:venue_list")
+
+    if not _can_manage_venue(request):
+        messages.error(request, "Kamu tidak punya akses untuk mengubah venue.")
         return redirect("venues:venue_list")
 
     if request.method == "POST":
@@ -63,20 +158,20 @@ def venue_edit(request, venue_id):
     return render(request, "venues/venue_form.html", {
         "action": "edit",
         "venue": selected_venue,
-        "user_role": "administrator",
+        "user_role": _get_user_role(request),
+        "can_manage": True,
     })
 
 
 def venue_delete(request, venue_id):
-    selected_venue = None
-
-    for venue in DUMMY_VENUES:
-        if str(venue["venue_id"]) == str(venue_id):
-            selected_venue = venue
-            break
+    selected_venue = _find_venue(venue_id)
 
     if not selected_venue:
         messages.error(request, "Venue tidak ditemukan.")
+        return redirect("venues:venue_list")
+
+    if not _can_manage_venue(request):
+        messages.error(request, "Kamu tidak punya akses untuk menghapus venue.")
         return redirect("venues:venue_list")
 
     if request.method == "POST":
@@ -85,11 +180,14 @@ def venue_delete(request, venue_id):
 
     return render(request, "venues/venue_confirm_delete.html", {
         "venue": selected_venue,
-        "user_role": "administrator",
+        "user_role": _get_user_role(request),
+        "can_manage": True,
     })
 
 
-# Seat Dummy Data
+# =========================================================
+# SEAT DUMMY DATA
+# =========================================================
 
 FILLED_SEAT_IDS = {
     "00000000-0000-0000-0000-000000000001",
@@ -103,7 +201,6 @@ FILLED_SEAT_IDS = {
     "00000000-0000-0000-0000-000000000009",
     "00000000-0000-0000-0000-000000000010",
 }
-
 
 RAW_DUMMY_SEATS = [
     ("00000000-0000-0000-0000-000000000001", "WVIP", "1", "A", "11111111-1111-1111-1111-111111111111"),
@@ -183,18 +280,15 @@ def _get_seat_page_role(request):
 
     if role in ["admin", "administrator"]:
         return "admin"
-
     if role == "organizer":
         return "organizer"
-
     if role == "customer":
         return "customer"
-
     return "admin"
 
 
 def _redirect_seat_list_with_role(page_role):
-    url = reverse("venues:seat_list")
+    url = reverse("seat_list")
     return redirect(f"{url}?role={page_role}")
 
 
