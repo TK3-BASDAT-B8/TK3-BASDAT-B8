@@ -21,7 +21,7 @@
   <form method="post" class="flex justify-end gap-3">
     {% csrf_token %}
 
-    <a href="{% url 'order_list' %}?role={{ role }}" class="px-4 py-2 border rounded-lg">
+    <a href="{% url 'orders:order_list' %}?role={{ role }}" class="px-4 py-2 border rounded-lg">
       Batal
     </a>
 

@@ -12,7 +12,7 @@
     </div>
 
     {% if role == 'customer' %}
-      <a href="{% url 'checkout' %}?role={{ role }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+      <a href="{% url 'orders:checkout' %}?role={{ role }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
         + Buat Order
       </a>
     {% endif %}
@@ -156,7 +156,7 @@
       <form
         class="ajax-form space-y-4"
         method="post"
-        action="{% url 'order_update' order.order_id %}?role={{ role }}"
+        action="{% url 'orders:order_update' order.order_id %}?role={{ role }}"
         data-modal="updateOrder{{ forloop.counter }}"
       >
         {% csrf_token %}
@@ -221,7 +221,7 @@
       <form
         class="ajax-form flex justify-end gap-3"
         method="post"
-        action="{% url 'order_delete' order.order_id %}?role={{ role }}"
+        action="{% url 'orders:order_delete' order.order_id %}?role={{ role }}"
         data-modal="deleteOrder{{ forloop.counter }}"
       >
         {% csrf_token %}
