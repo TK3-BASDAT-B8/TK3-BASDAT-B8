@@ -8,7 +8,7 @@
         <p class="text-sm text-gray-500">Daftar event yang tersedia</p>
     </div>
 
-    {% if can_manage %}
+    {% if request.session.user.role == 'administrator' or request.session.user.role == 'organizer' %}
     <button
         hx-get="{% url 'event_create' %}"
         hx-target="#modal-root"
@@ -76,7 +76,7 @@
                     Detail
                 </a>
 
-                {% if can_manage %}
+                {% if request.session.user.role == 'administrator' or request.session.user.role == 'organizer' %}
                 <button
                     hx-get="{% url 'event_edit' event.event_id %}"
                     hx-target="#modal-root"

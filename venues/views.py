@@ -52,6 +52,9 @@ DUMMY_VENUES = [
 
 
 def _get_user_role(request):
+    user_data = request.session.get("user", {})
+    if user_data:
+        return user_data.get("role", "guest")
     roles = request.session.get("roles", [])
     if "administrator" in roles:
         return "administrator"
@@ -63,8 +66,8 @@ def _get_user_role(request):
 
 
 def _can_manage_venue(request):
-    roles = request.session.get("roles", [])
-    return "administrator" in roles or "organizer" in roles
+   role = _get_user_role(request)
+   return role in ["administrator", "organizer"]
 
 
 def _find_venue(venue_id):
@@ -116,11 +119,11 @@ def venue_partial(request):
 def venue_create(request):
     if not _can_manage_venue(request):
         messages.error(request, "Kamu tidak punya akses untuk menambah venue.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     if request.method == "POST":
         messages.success(request, "Venue berhasil ditambahkan. Ini masih dummy frontend.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     return render(request, "venues/venue_form.html", {
         "action": "create",
@@ -135,15 +138,15 @@ def venue_edit(request, venue_id):
 
     if not selected_venue:
         messages.error(request, "Venue tidak ditemukan.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     if not _can_manage_venue(request):
         messages.error(request, "Kamu tidak punya akses untuk mengubah venue.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     if request.method == "POST":
         messages.success(request, "Venue berhasil diperbarui. Ini masih dummy frontend.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     return render(request, "venues/venue_form.html", {
         "action": "edit",
@@ -158,15 +161,15 @@ def venue_delete(request, venue_id):
 
     if not selected_venue:
         messages.error(request, "Venue tidak ditemukan.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     if not _can_manage_venue(request):
         messages.error(request, "Kamu tidak punya akses untuk menghapus venue.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     if request.method == "POST":
         messages.success(request, "Venue berhasil dihapus. Ini masih dummy frontend.")
-        return redirect("venue_list")
+        return redirect("venues:venue_list")
 
     return render(request, "venues/venue_confirm_delete.html", {
         "venue": selected_venue,
