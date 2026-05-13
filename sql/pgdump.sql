@@ -1,3 +1,6 @@
+-- TikTakTuk DDL sesuai pgdump.sql yang diberikan
+-- Run: psql -d tiktaktuk -f sql/ddl.sql
+
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS user_account (
