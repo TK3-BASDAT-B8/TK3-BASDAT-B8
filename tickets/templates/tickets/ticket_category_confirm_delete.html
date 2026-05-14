@@ -1,30 +1,5 @@
-<div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
-     onclick="if(event.target===this) document.getElementById('modal-root').innerHTML=''">
-    <div class="bg-white rounded-2xl w-full max-w-sm mx-4 p-6 shadow-xl">
-        <div class="flex items-start justify-between mb-3">
-            <h2 class="text-lg font-bold text-red-600">Hapus Kategori</h2>
-            <button type="button" onclick="document.getElementById('modal-root').innerHTML=''"
-                class="text-gray-400 hover:text-gray-600 ml-4 flex-shrink-0">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-        <p class="text-sm text-gray-600 mb-6">
-            Apakah Anda yakin ingin menghapus kategori <strong>{{ category.category_name }}</strong>? Tindakan ini tidak dapat dibatalkan.
-        </p>
-        <form method="post" action="{% url 'ticket_category_delete' category.category_id %}">
-            {% csrf_token %}
-            <div class="flex gap-3 justify-end">
-                <button type="button" onclick="document.getElementById('modal-root').innerHTML=''"
-                    class="border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50">
-                    Batal
-                </button>
-                <button type="submit"
-                    class="bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-red-700">
-                    Hapus
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+{% extends "base.html" %}
+{% block content %}
+  {% include "tickets/partials/ticket_category_page.html" %}
+  <div class="fixed inset-0 z-40 bg-slate-950/50"></div><div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"><div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><h2 class="text-lg font-extrabold text-red-600">Delete Ticket Category</h2><p class="mt-4 text-sm text-slate-600">Category ID: <span class="font-mono">{{ selected_category.category_id }}</span></p><p class="mt-1 text-sm text-slate-600">Category Name: <strong>{{ selected_category.category_name }}</strong></p><form method="post" class="mt-6 grid grid-cols-2 gap-3">{% csrf_token %}<a href="{% url 'tickets:ticket_category_list' %}" class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 text-sm font-extrabold text-slate-700">Cancel</a><button class="h-11 rounded-2xl bg-red-600 text-sm font-extrabold text-white">Confirm Deletion</button></form></div></div>
+{% endblock %}

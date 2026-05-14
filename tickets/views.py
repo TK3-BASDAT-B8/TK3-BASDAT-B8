@@ -443,7 +443,10 @@ def ticket_category_delete(request, category_id):
     )
 
 
-# Ticket views
+# ============================================================
+# TICKET
+# ============================================================
+
 def _ticket_where_for_role(request):
     role = page_role(request)
 
