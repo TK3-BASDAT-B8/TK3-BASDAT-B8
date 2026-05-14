@@ -2,45 +2,29 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>TikTakTuk</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TikTakTuk{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
-
 <body class="bg-slate-50 text-slate-900">
-
   {% include "navbar.html" %}
 
-  {% if messages %}
-    <div class="max-w-6xl mx-auto mt-4 px-6">
-      {% for message in messages %}
-        <div class="mb-3 rounded-lg border px-4 py-3 text-sm
-          {% if message.tags == 'error' %}
-            bg-red-50 text-red-700 border-red-200
-          {% else %}
-            bg-green-50 text-green-700 border-green-200
-          {% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <main class="max-w-6xl mx-auto p-6">
+  <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+    {% if messages %}
+      <div class="mb-5 space-y-2">
+        {% for message in messages %}
+          <div class="rounded-2xl border px-4 py-3 text-sm font-semibold {% if message.tags == 'error' %}border-red-200 bg-red-50 text-red-700{% elif message.tags == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-blue-200 bg-blue-50 text-blue-700{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 
-  <div id="modal-root"></div>
-
-  <script>
-    document.addEventListener('click', function(e) {
-      if (e.target.closest('[data-close-modal]')) {
-        document.getElementById('modal-root').innerHTML = '';
-      }
-    });
-  </script>
-
+  <script src="{% static 'js/main.js' %}"></script>
   {% block extra_js %}{% endblock %}
-
 </body>
 </html>

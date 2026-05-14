@@ -7,8 +7,8 @@
         <h1 class="text-2xl font-bold text-gray-900">Daftar Artis</h1>
         <p class="text-sm text-gray-500">Kelola artis yang ada di platform TikTakTuk</p>
     </div>
-    {% if 'administrator' in request.session.roles %}
-    <button hx-get="{% url 'artist_create' %}" hx-target="#modal-root" hx-swap="innerHTML"
+    {% if can_manage %}
+    <button hx-get="{% url 'events:artist_create' %}" hx-target="#modal-root" hx-swap="innerHTML"
         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
         + Tambah Artis
     </button>
@@ -75,16 +75,16 @@
                     {% endif %}
                 </td>
                 <td class="py-4 text-right">
-                    {% if 'administrator' in request.session.roles %}
+                    {% if can_manage %}
                     <div class="flex items-center justify-end gap-3">
-                        <button hx-get="{% url 'artist_edit' artist.artist_id %}" hx-target="#modal-root" hx-swap="innerHTML"
+                        <button hx-get="{% url 'events:artist_edit' artist.artist_id %}" hx-target="#modal-root" hx-swap="innerHTML"
                             class="text-gray-400 hover:text-gray-600">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
                         </button>
-                        <button hx-get="{% url 'artist_delete' artist.artist_id %}" hx-target="#modal-root" hx-swap="innerHTML"
+                        <button hx-get="{% url 'events:artist_delete' artist.artist_id %}" hx-target="#modal-root" hx-swap="innerHTML"
                             class="text-red-400 hover:text-red-600">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
