@@ -1,2 +1,24 @@
-<!-- htmx partial -->
-<!-- TODO: implement fragment -->
+<div class="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+  <table class="min-w-full divide-y divide-slate-100 text-sm">
+    <thead class="bg-slate-50 text-left text-xs font-extrabold uppercase tracking-wide text-slate-500">
+      <tr>
+        <th class="px-4 py-3">Event</th><th class="px-4 py-3">Category ID</th><th class="px-4 py-3">Category Name</th><th class="px-4 py-3">Quota</th><th class="px-4 py-3">Used</th><th class="px-4 py-3">Price</th>{% if can_manage %}<th class="px-4 py-3 text-right">Action</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 bg-white">
+      {% for cat in categories %}
+        <tr>
+          <td class="px-4 py-3 font-bold text-slate-900">{{ cat.event_title }}</td>
+          <td class="px-4 py-3 font-mono text-xs text-slate-500">{{ cat.category_id }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ cat.category_name }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ cat.quota }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ cat.used }}</td>
+          <td class="px-4 py-3 text-slate-700">Rp {{ cat.price_display }}</td>
+          {% if can_manage %}<td class="px-4 py-3 text-right"><a href="{% url 'tickets:ticket_category_edit' cat.category_id %}" class="font-bold text-blue-700 hover:underline">Update</a><a href="{% url 'tickets:ticket_category_delete' cat.category_id %}" class="ml-3 font-bold text-red-700 hover:underline">Delete</a></td>{% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="px-4 py-10 text-center text-slate-500">Belum ada kategori tiket.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
