@@ -116,9 +116,7 @@ def _can_manage_ticket(request):
     return _is_admin(request)
 
 
-# ============================================================
-# TICKET CATEGORY
-# ============================================================
+# ticket category views
 
 def _fetch_category_rows(request, q='', event_id=''):
     role = page_role(request)
