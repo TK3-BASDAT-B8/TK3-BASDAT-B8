@@ -1,98 +1,89 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-6">
-        <div class="flex items-center justify-between mb-5">
-            <div>
-                <h2 class="text-xl font-bold">
-                    {% if mode == 'create' %}Buat Event{% else %}Edit Event{% endif %}
-                </h2>
-                <p class="text-sm text-gray-500">Modal frontend dummy</p>
+{% extends "base.html" %}
+{% block content %}
+  {% include "events/partials/event_page.html" %}
+  <div class="fixed inset-0 z-40 bg-slate-950/50"></div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-8">
+    <div class="w-full max-w-4xl rounded-3xl bg-white p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h2 class="text-lg font-extrabold text-slate-950">{% if form_mode == 'edit' %}Edit Acara{% else %}Buat Acara Baru{% endif %}</h2>
+        <a href="{% url 'events:event_list' %}" class="text-3xl leading-none text-slate-400 hover:text-slate-700">&times;</a>
+      </div>
+      <form method="post" class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Judul Acara (event_title)</label>
+            <input name="event_title" required value="{{ selected_event.event_title|default:'' }}" placeholder="cth. Konser Melodi Senja" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Tanggal (date)</label><input type="date" name="event_date" required value="{{ selected_event.event_date|default:'' }}" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></div>
+            <div><label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Waktu (time)</label><input type="time" name="event_time" required value="{{ selected_event.event_time|default:'' }}" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></div>
+          </div>
+          <div>
+            <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Venue (venue_id)</label>
+            <select name="venue_id" required class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+              <option value="">Pilih Venue</option>
+              {% for venue in venues %}<option value="{{ venue.venue_id }}" {% if selected_event.venue_id == venue.venue_id %}selected{% endif %}>{{ venue.venue_name }} - Kapasitas {{ venue.capacity }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Organizer</label>
+            <select name="organizer_id" required class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+              {% for organizer in organizers %}<option value="{{ organizer.organizer_id }}" {% if selected_event.organizer_id == organizer.organizer_id %}selected{% endif %}>{{ organizer.organizer_name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="mb-2 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Artis (event_artist)</label>
+            <div class="flex max-h-36 flex-wrap gap-2 overflow-y-auto rounded-2xl border border-slate-200 p-3">
+              {% for artist in artists %}
+                <label class="flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600">
+                  <input type="checkbox" name="artist_ids" value="{{ artist.artist_id }}" {% if artist.artist_id in selected_artist_ids %}checked{% endif %}> {{ artist.name }}
+                </label>
+              {% endfor %}
             </div>
-            <button data-close-modal class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+          </div>
         </div>
-
-        <form method="post">
-            {% csrf_token %}
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Judul Acara</label>
-                    <input type="text" name="event_title" value="{{ event.event_title|default:'' }}"
-                        class="border rounded-lg px-3 py-2 w-full" required>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Tanggal</label>
-                        <input type="date" name="event_date"
-                            value="{% if event %}{{ event.event_datetime|date:'Y-m-d' }}{% endif %}"
-                            class="border rounded-lg px-3 py-2 w-full" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Waktu</label>
-                        <input type="time" name="event_time"
-                            value="{% if event %}{{ event.event_datetime|date:'H:i' }}{% endif %}"
-                            class="border rounded-lg px-3 py-2 w-full" required>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Venue</label>
-                        <select name="venue_id" class="border rounded-lg px-3 py-2 w-full" required>
-                            <option value="">Pilih venue</option>
-                            {% for v in venues %}
-                            <option value="{{ v.venue_id }}" {% if event.venue_id == v.venue_id %}selected{% endif %}>
-                                {{ v.venue_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Organizer</label>
-                        <select name="organizer_id" class="border rounded-lg px-3 py-2 w-full" required>
-                            <option value="">Pilih organizer</option>
-                            {% for o in organizers %}
-                            <option value="{{ o.organizer_id }}" {% if event.organizer_id == o.organizer_id %}selected{% endif %}>
-                                {{ o.organizer_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Performer</label>
-                    <textarea name="performers_text" rows="3" class="border rounded-lg px-3 py-2 w-full"
-                        placeholder="Pisahkan dengan koma">{{ performers_text }}</textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Kategori Tiket</label>
-                    <textarea name="ticket_categories_text" rows="3" class="border rounded-lg px-3 py-2 w-full"
-                        placeholder="Pisahkan dengan koma">{{ ticket_categories_text }}</textarea>
-                    <p class="text-xs text-gray-400 mt-1">Ini hanya dummy frontend, isi bebas saja.</p>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Gambar Acara</label>
-                    <input type="url" name="image" value="{{ event.image|default:'' }}"
-                        placeholder="https://..."
-                        class="border rounded-lg px-3 py-2 w-full">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Deskripsi</label>
-                    <textarea name="description" rows="4" class="border rounded-lg px-3 py-2 w-full">{{ event.description|default:'' }}</textarea>
-                </div>
+        <div class="space-y-4">
+          <div>
+            <div class="mb-2 flex items-center justify-between">
+              <label class="block text-xs font-extrabold uppercase tracking-wide text-slate-500">Kategori Tiket (ticket_category)</label>
+              <button type="button" onclick="addTicketCategoryRow('event-category-container')" class="text-xs font-extrabold text-blue-700">+ Tambah Kategori</button>
             </div>
-
-            <div class="flex gap-2 pt-6">
-                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
-                    {% if mode == 'create' %}Buat Acara{% else %}Simpan{% endif %}
-                </button>
-                <button type="button" data-close-modal class="border px-4 py-2 rounded-lg hover:bg-gray-50">
-                    Batal
-                </button>
+            <div id="event-category-container" class="space-y-3">
+              <template data-category-row-template>
+                <div data-row class="rounded-2xl border border-slate-200 p-3">
+                  <input type="hidden" name="category_id" value="">
+                  <div class="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                    <input name="category_name" placeholder="Regular" class="h-10 rounded-xl border border-slate-200 px-3 text-sm sm:col-span-2">
+                    <input type="number" min="0" step="0.01" name="category_price" placeholder="100000" class="h-10 rounded-xl border border-slate-200 px-3 text-sm">
+                    <input type="number" min="1" name="category_quota" placeholder="100" class="h-10 rounded-xl border border-slate-200 px-3 text-sm">
+                    <button type="button" onclick="removeClosestRow(this)" class="h-10 rounded-xl border border-red-200 text-sm font-bold text-red-700">Hapus</button>
+                  </div>
+                </div>
+              </template>
+              {% for cat in category_rows %}
+                <div data-row class="rounded-2xl border border-slate-200 p-3">
+                  <input type="hidden" name="category_id" value="{{ cat.category_id|default:'' }}">
+                  <div class="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                    <input name="category_name" required value="{{ cat.category_name|default:'' }}" placeholder="Regular" class="h-10 rounded-xl border border-slate-200 px-3 text-sm sm:col-span-2">
+                    <input type="number" min="0" step="0.01" name="category_price" required value="{{ cat.price|default:'' }}" placeholder="100000" class="h-10 rounded-xl border border-slate-200 px-3 text-sm">
+                    <input type="number" min="1" name="category_quota" required value="{{ cat.quota|default:'' }}" placeholder="100" class="h-10 rounded-xl border border-slate-200 px-3 text-sm">
+                    <button type="button" onclick="removeClosestRow(this)" class="h-10 rounded-xl border border-red-200 text-sm font-bold text-red-700">Hapus</button>
+                  </div>
+                  {% if cat.used %}<p class="mt-2 text-xs text-slate-400">Tiket terjual: {{ cat.used }}</p>{% endif %}
+                </div>
+              {% endfor %}
             </div>
-        </form>
+          </div>
+          <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold leading-5 text-blue-700">
+            Data yang disimpan mengikuti skema final: judul acara, tanggal/waktu, venue, organizer, artist, dan kategori tiket.
+          </div>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <a href="{% url 'events:event_list' %}" class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 text-sm font-extrabold text-slate-700 hover:bg-slate-50">Batal</a>
+            <button class="h-11 rounded-2xl bg-blue-600 text-sm font-extrabold text-white hover:bg-blue-700">{% if form_mode == 'edit' %}Simpan{% else %}Buat Acara{% endif %}</button>
+          </div>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
+{% endblock %}

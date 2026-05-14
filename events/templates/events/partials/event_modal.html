@@ -20,12 +20,6 @@
                         class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-indigo-500 outline-none" required>
                 </div>
 
-                <!-- Deskripsi -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Deskripsi</label>
-                    <textarea name="description" rows="2" 
-                        class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-indigo-500 outline-none">{{ event.description|default:'' }}</textarea>
-                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Tanggal & Waktu -->
@@ -36,12 +30,6 @@
                             class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-indigo-500 outline-none" required>
                     </div>
 
-                    <!-- Image URL -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1">URL Gambar</label>
-                        <input type="url" name="image" value="{{ event.image|default:'' }}" placeholder="https://..."
-                            class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
