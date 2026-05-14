@@ -1,205 +1,204 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from django.contrib import messages
+import uuid
 
-PROMOTIONS = [
-    {
-        'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1',
-        'promo_code': 'PROMO_TAHUN_BARU',
-        'discount_type': 'PERCENTAGE',
-        'discount_value': 25.00,
-        'start_date': '2026-01-01',
-        'end_date': '2026-01-05',
-        'usage_limit': 100,
-        'used': 44,
-    },
-    {
-        'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee2',
-        'promo_code': 'PROMO_VALENTINE',
-        'discount_type': 'NOMINAL',
-        'discount_value': 14000.00,
-        'start_date': '2026-02-14',
-        'end_date': '2026-02-15',
-        'usage_limit': 50,
-        'used': 12,
-    },
-    {
-        'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee3',
-        'promo_code': 'LEBARAN_IDUL_FITRI',
-        'discount_type': 'PERCENTAGE',
-        'discount_value': 50.00,
-        'start_date': '2026-03-20',
-        'end_date': '2026-04-05',
-        'usage_limit': 200,
-        'used': 87,
-    },
-    {
-        'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee4',
-        'promo_code': 'DISKON_PELAJAR',
-        'discount_type': 'PERCENTAGE',
-        'discount_value': 15.00,
-        'start_date': '2026-01-01',
-        'end_date': '2026-12-31',
-        'usage_limit': 500,
-        'used': 156,
-    },
-    {
-        'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee5',
-        'promo_code': 'MEMBER_BARU',
-        'discount_type': 'NOMINAL',
-        'discount_value': 20000.00,
-        'start_date': '2026-01-01',
-        'end_date': '2026-12-31',
-        'usage_limit': 1000,
-        'used': 231,
-    },
-    {
-        'promotion_id': 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee6',
-        'promo_code': 'FLASH_SALE_MANTAP',
-        'discount_type': 'NOMINAL',
-        'discount_value': 100000.00,
-        'start_date': '2026-04-28',
-        'end_date': '2026-04-28',
-        'usage_limit': 25,
-        'used': 19,
-    },
-]
+from django.contrib import messages
+from django.db import DatabaseError, transaction
+from django.shortcuts import redirect, render
+
+from core.auth import page_role, role_required
+from core.db import db_error_message, execute_query, fetch_all, fetch_one
 
 DISCOUNT_TYPES = ['PERCENTAGE', 'NOMINAL']
-MOCK_ROLE = 'admin'
 
 
-def get_mock_role(request):
-    user = request.session.get("user")
+def _promotion_context(request):
+    role = page_role(request)
+    search = request.GET.get('q', '').strip()
+    discount_type = request.GET.get('type', 'all').strip().upper()
 
-    if user:
-        role = user.get("role")
-
-        if role == "administrator":
-            return "admin"
-
-        if role == "organizer":
-            return "organizer"
-
-        if role == "customer":
-            return "customer"
-
-    return request.GET.get("role", MOCK_ROLE)
-
-
-def is_ajax(request):
-    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-
-
-def redirect_with_role(role):
-    return redirect(f'/promotions/?role={role}')
-
-
-def promotion_list(request):
-    role = get_mock_role(request)
-    promotions = list(PROMOTIONS)
-
-    search = request.GET.get('q', '').strip().lower()
-    filter_type = request.GET.get('type', 'all')
-
+    where = ['1=1']
+    params = []
     if search:
-        promotions = [p for p in promotions if search in p['promo_code'].lower()]
+        where.append('LOWER(p.promo_code) LIKE LOWER(%s)')
+        params.append(f'%{search}%')
+    if discount_type in DISCOUNT_TYPES:
+        where.append('p.discount_type = %s')
+        params.append(discount_type)
 
-    if filter_type in DISCOUNT_TYPES:
-        promotions = [p for p in promotions if p['discount_type'] == filter_type]
+    promotions = fetch_all(
+        f'''
+        SELECT p.promotion_id::text, p.promo_code, p.discount_type,
+               p.discount_value, p.start_date, p.end_date, p.usage_limit,
+               COUNT(op.order_promotion_id)::int AS used
+        FROM PROMOTION p
+        LEFT JOIN ORDER_PROMOTION op ON op.promotion_id = p.promotion_id
+        WHERE {' AND '.join(where)}
+        GROUP BY p.promotion_id, p.promo_code, p.discount_type,
+                 p.discount_value, p.start_date, p.end_date, p.usage_limit
+        ORDER BY p.promo_code ASC
+        ''',
+        params,
+    )
 
-    total_promos = len(PROMOTIONS)
-    total_usage = sum(p['used'] for p in PROMOTIONS)
-    total_percentage = sum(1 for p in PROMOTIONS if p['discount_type'] == 'PERCENTAGE')
+    stats = fetch_one(
+        '''
+        SELECT COUNT(*)::int AS total_promos,
+               COALESCE((SELECT COUNT(*) FROM ORDER_PROMOTION), 0)::int AS total_usage,
+               COUNT(*) FILTER (WHERE discount_type = 'PERCENTAGE')::int AS total_percentage
+        FROM PROMOTION
+        '''
+    ) or {}
 
-    return render(request, 'promotions/promotion_list.html', {
+    return {
         'role': role,
         'promotions': promotions,
         'search': search,
-        'filter_type': filter_type,
+        'filter_type': discount_type if discount_type in DISCOUNT_TYPES else 'all',
         'discount_types': DISCOUNT_TYPES,
-        'total_promos': total_promos,
-        'total_usage': total_usage,
-        'total_percentage': total_percentage,
+        'total_promos': stats.get('total_promos', 0) or 0,
+        'total_usage': stats.get('total_usage', 0) or 0,
+        'total_percentage': stats.get('total_percentage', 0) or 0,
+    }
+
+
+def _promotion_from_post(request, existing=None):
+    promo = dict(existing or {})
+    promo.update({
+        'promo_code': request.POST.get('promo_code', '').strip().upper(),
+        'discount_type': request.POST.get('discount_type', '').strip().upper(),
+        'discount_value': request.POST.get('discount_value', '').strip(),
+        'start_date': request.POST.get('start_date', '').strip(),
+        'end_date': request.POST.get('end_date', '').strip(),
+        'usage_limit': request.POST.get('usage_limit', '').strip(),
+    })
+    return promo
+
+
+def _validate_promotion_payload(promo):
+    if not promo['promo_code']:
+        raise ValueError('Kode promo wajib diisi.')
+    if promo['discount_type'] not in DISCOUNT_TYPES:
+        raise ValueError('Tipe diskon harus PERCENTAGE atau NOMINAL.')
+    try:
+        discount_value = float(promo['discount_value'])
+    except (TypeError, ValueError):
+        raise ValueError('Nilai diskon harus berupa angka.')
+    if discount_value <= 0:
+        raise ValueError('Nilai diskon harus lebih dari 0.')
+    try:
+        usage_limit = int(promo['usage_limit'])
+    except (TypeError, ValueError):
+        raise ValueError('Batas penggunaan harus berupa bilangan bulat.')
+    if usage_limit <= 0:
+        raise ValueError('Batas penggunaan harus lebih dari 0.')
+    if not promo['start_date'] or not promo['end_date']:
+        raise ValueError('Tanggal mulai dan tanggal berakhir wajib diisi.')
+    if promo['end_date'] < promo['start_date']:
+        raise ValueError('Tanggal berakhir harus sama dengan atau setelah tanggal mulai.')
+    return promo['promo_code'], promo['discount_type'], discount_value, promo['start_date'], promo['end_date'], usage_limit
+
+
+def promotion_list(request):
+    return render(request, 'promotions/promotion_list.html', _promotion_context(request))
+
+
+@role_required('administrator')
+def promotion_create(request):
+    promotion = {}
+    if request.method == 'POST':
+        promotion = _promotion_from_post(request)
+        try:
+            promo_code, discount_type, discount_value, start_date, end_date, usage_limit = _validate_promotion_payload(promotion)
+            execute_query(
+                '''
+                INSERT INTO PROMOTION
+                    (promotion_id, promo_code, discount_type, discount_value, start_date, end_date, usage_limit)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''',
+                [str(uuid.uuid4()), promo_code, discount_type, discount_value, start_date, end_date, usage_limit],
+            )
+            messages.success(request, 'Promo berhasil dibuat.')
+            return redirect('promotions:promotion_list')
+        except (DatabaseError, ValueError) as exc:
+            messages.error(request, db_error_message(exc) if isinstance(exc, DatabaseError) else str(exc))
+
+    return render(request, 'promotions/promotion_form.html', {
+        'mode': 'create',
+        'promotion': promotion,
+        'discount_types': DISCOUNT_TYPES,
+        'role': page_role(request),
     })
 
 
-def promotion_create(request):
-    role = get_mock_role(request)
-
-    if role != 'admin':
-        return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat membuat promo.'}, status=403)
-
-    if request.method == 'POST':
-        new_promo = {
-            'promotion_id': f'promo-{len(PROMOTIONS) + 1}',
-            'promo_code': request.POST.get('promo_code'),
-            'discount_type': request.POST.get('discount_type'),
-            'discount_value': float(request.POST.get('discount_value')),
-            'start_date': request.POST.get('start_date'),
-            'end_date': request.POST.get('end_date'),
-            'usage_limit': int(request.POST.get('usage_limit')),
-            'used': 0,
-        }
-
-        PROMOTIONS.insert(0, new_promo)
-
-        if is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'Promo baru berhasil dibuat!'})
-
-        messages.success(request, 'Promo baru berhasil dibuat!')
-        return redirect_with_role(role)
-
-    return redirect_with_role(role)
-
-
+@role_required('administrator')
 def promotion_update(request, promotion_id):
-    role = get_mock_role(request)
-
-    if role != 'admin':
-        return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat update promo.'}, status=403)
-
-    promotion = next((p for p in PROMOTIONS if p['promotion_id'] == promotion_id), None)
-
+    promotion = fetch_one(
+        '''
+        SELECT promotion_id::text, promo_code, discount_type, discount_value,
+               start_date, end_date, usage_limit
+        FROM PROMOTION
+        WHERE promotion_id = %s
+        ''',
+        [promotion_id],
+    )
     if not promotion:
-        return JsonResponse({'success': False, 'message': 'Promo tidak ditemukan.'}, status=404)
+        messages.error(request, 'Promo tidak ditemukan.')
+        return redirect('promotions:promotion_list')
 
     if request.method == 'POST':
-        promotion['promo_code'] = request.POST.get('promo_code')
-        promotion['discount_type'] = request.POST.get('discount_type')
-        promotion['discount_value'] = float(request.POST.get('discount_value'))
-        promotion['start_date'] = request.POST.get('start_date')
-        promotion['end_date'] = request.POST.get('end_date')
-        promotion['usage_limit'] = int(request.POST.get('usage_limit'))
+        promotion = _promotion_from_post(request, promotion)
+        try:
+            promo_code, discount_type, discount_value, start_date, end_date, usage_limit = _validate_promotion_payload(promotion)
+            execute_query(
+                '''
+                UPDATE PROMOTION
+                SET promo_code = %s,
+                    discount_type = %s,
+                    discount_value = %s,
+                    start_date = %s,
+                    end_date = %s,
+                    usage_limit = %s
+                WHERE promotion_id = %s
+                ''',
+                [promo_code, discount_type, discount_value, start_date, end_date, usage_limit, promotion_id],
+            )
+            messages.success(request, 'Promo berhasil diperbarui.')
+            return redirect('promotions:promotion_list')
+        except (DatabaseError, ValueError) as exc:
+            messages.error(request, db_error_message(exc) if isinstance(exc, DatabaseError) else str(exc))
 
-        if is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'Promo berhasil diperbarui!'})
+    return render(request, 'promotions/promotion_form.html', {
+        'mode': 'update',
+        'promotion': promotion,
+        'discount_types': DISCOUNT_TYPES,
+        'role': page_role(request),
+    })
 
-        messages.success(request, 'Promo berhasil diperbarui!')
-        return redirect_with_role(role)
 
-    return redirect_with_role(role)
-
-
+@role_required('administrator')
 def promotion_delete(request, promotion_id):
-    role = get_mock_role(request)
-
-    if role != 'admin':
-        return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat delete promo.'}, status=403)
+    promotion = fetch_one(
+        '''
+        SELECT promotion_id::text, promo_code
+        FROM PROMOTION
+        WHERE promotion_id = %s
+        ''',
+        [promotion_id],
+    )
+    if not promotion:
+        messages.error(request, 'Promo tidak ditemukan.')
+        return redirect('promotions:promotion_list')
 
     if request.method == 'POST':
-        global PROMOTIONS
+        try:
+            with transaction.atomic():
+                execute_query('DELETE FROM ORDER_PROMOTION WHERE promotion_id = %s', [promotion_id])
+                execute_query('DELETE FROM PROMOTION WHERE promotion_id = %s', [promotion_id])
+            messages.success(request, 'Promo berhasil dihapus.')
+            return redirect('promotions:promotion_list')
+        except DatabaseError as exc:
+            messages.error(request, db_error_message(exc))
 
-        before_count = len(PROMOTIONS)
-        PROMOTIONS = [p for p in PROMOTIONS if p['promotion_id'] != promotion_id]
-
-        if len(PROMOTIONS) == before_count:
-            return JsonResponse({'success': False, 'message': 'Promo tidak ditemukan.'}, status=404)
-
-        if is_ajax(request):
-            return JsonResponse({'success': True, 'message': 'Promo berhasil dihapus!'})
-
-        messages.success(request, 'Promo berhasil dihapus!')
-        return redirect_with_role(role)
-
-    return redirect_with_role(role)
+    return render(request, 'promotions/promotion_confirm_delete.html', {
+        'promotion': promotion,
+        'role': page_role(request),
+    })
