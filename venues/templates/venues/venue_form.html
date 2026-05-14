@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "venues/partials/venue_page.html" %}
+  <div class="fixed inset-0 z-40 bg-slate-950/50"></div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h2 class="text-lg font-extrabold text-slate-950">{% if form_mode == 'edit' %}Edit Venue{% else %}Tambah Venue Baru{% endif %}</h2>
+        <a href="{% url 'venues:venue_list' %}" class="text-3xl leading-none text-slate-400 hover:text-slate-700">&times;</a>
+      </div>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Nama Venue (venue_name)</label>
+          <input name="venue_name" required value="{{ selected_venue.venue_name|default:'' }}" placeholder="cth. Jakarta Convention Center" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Kapasitas (capacity)</label>
+            <input type="number" min="1" name="capacity" required value="{{ selected_venue.capacity|default:'' }}" placeholder="1000" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+          </div>
+          <div>
+            <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Kota (city)</label>
+            <input name="city" required value="{{ selected_venue.city|default:'' }}" placeholder="Jakarta" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Alamat (address)</label>
+          <textarea name="address" required rows="3" placeholder="Jl. Gatot Subroto No.1" class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">{{ selected_venue.address|default:'' }}</textarea>
+        </div>
+        <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold leading-5 text-blue-700">
+          Jenis seating otomatis mengikuti data kursi: venue tampil sebagai <em>reserved seating</em> kalau sudah memiliki kursi di Manajemen Kursi; kalau belum ada kursi, venue tampil sebagai <em>free seating</em>.
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <a href="{% url 'venues:venue_list' %}" class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 text-sm font-extrabold text-slate-700 hover:bg-slate-50">Batal</a>
+          <button class="h-11 rounded-2xl bg-blue-600 text-sm font-extrabold text-white hover:bg-blue-700">{% if form_mode == 'edit' %}Simpan{% else %}Tambah{% endif %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

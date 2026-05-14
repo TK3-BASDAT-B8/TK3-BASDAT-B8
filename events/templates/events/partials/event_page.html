@@ -1,0 +1,22 @@
+<section class="space-y-5">
+  <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-slate-950">{{ page_title }}</h1>
+      <p class="mt-1 text-sm text-slate-500">Cari acara berdasarkan judul, venue, atau artist.</p>
+    </div>
+    {% if can_manage %}<a href="{% url 'events:event_create' %}" class="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm hover:bg-blue-700">+ Buat Acara</a>{% endif %}
+  </div>
+  <form method="get" action="{% url 'events:event_list' %}" class="grid grid-cols-1 gap-3 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm md:grid-cols-5">
+    <input name="q" value="{{ q }}" placeholder="Cari judul acara atau artist..." class="h-11 rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 md:col-span-2">
+    <select name="venue" class="h-11 rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+      <option value="">Semua Venue</option>
+      {% for venue in venue_filters %}<option value="{{ venue.venue_id }}" {% if selected_venue == venue.venue_id %}selected{% endif %}>{{ venue.venue_name }}</option>{% endfor %}
+    </select>
+    <select name="artist" class="h-11 rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+      <option value="">Semua Artist</option>
+      {% for artist in artist_filters %}<option value="{{ artist.artist_id }}" {% if selected_artist == artist.artist_id %}selected{% endif %}>{{ artist.name }}</option>{% endfor %}
+    </select>
+    <button class="h-11 rounded-2xl bg-slate-950 px-4 text-sm font-extrabold text-white hover:bg-slate-800">Terapkan</button>
+  </form>
+  {% include "events/partials/event_cards.html" %}
+</section>

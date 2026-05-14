@@ -1,0 +1,164 @@
+<div class="space-y-4">
+  {% for ticket in tickets %}
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start gap-4">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 5V4a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v1H6a2 2 0 0 0-2 2v3a2 2 0 0 1 0 4v3a2 2 0 0 0 2 2h2v1a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h2a2 2 0 0 0 2-2v-3a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2h-2Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 9h6M9 15h6M12 7v10" />
+              </svg>
+            </div>
+
+            <div class="min-w-0">
+              <div class="mb-1 flex flex-wrap items-center gap-2">
+                {% if ticket.status_label == "Valid" %}
+                  <span class="inline-flex rounded-md bg-green-50 px-2 py-1 text-[10px] font-extrabold uppercase leading-none text-green-600">
+                    VALID
+                  </span>
+                {% elif ticket.status_label == "Terpakai" %}
+                  <span class="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[10px] font-extrabold uppercase leading-none text-slate-500">
+                    TERPAKAI
+                  </span>
+                {% elif ticket.status_label == "Dibatalkan" %}
+                  <span class="inline-flex rounded-md bg-red-50 px-2 py-1 text-[10px] font-extrabold uppercase leading-none text-red-600">
+                    DIBATALKAN
+                  </span>
+                {% else %}
+                  <span class="inline-flex rounded-md bg-yellow-50 px-2 py-1 text-[10px] font-extrabold uppercase leading-none text-yellow-600">
+                    PENDING
+                  </span>
+                {% endif %}
+
+                <span class="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-extrabold uppercase leading-none text-blue-600">
+                  {{ ticket.category_name }}
+                </span>
+              </div>
+
+              <h3 class="text-2xl font-extrabold leading-tight text-slate-950">
+                {{ ticket.event_title }}
+              </h3>
+              <p class="mt-1 text-sm font-semibold text-slate-400">
+                {{ ticket.ticket_code }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 grid grid-cols-2 gap-x-8 gap-y-5 md:grid-cols-3">
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Jadwal
+              </p>
+              <p class="mt-1 text-sm font-bold text-slate-700">
+                {{ ticket.event_datetime_display }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Lokasi
+              </p>
+              <p class="mt-1 text-sm font-bold text-slate-700">
+                {{ ticket.venue_name }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Kursi
+              </p>
+              <p class="mt-1 text-sm font-bold text-slate-700">
+                {{ ticket.seat_label }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Harga
+              </p>
+              <p class="mt-1 text-sm font-extrabold text-slate-950">
+                Rp {{ ticket.price_display }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Order
+              </p>
+              <p class="mt-1 text-sm font-bold text-slate-700">
+                {{ ticket.order_code }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Pelanggan
+              </p>
+              <p class="mt-1 text-sm font-bold text-slate-700">
+                {{ ticket.customer_name }}
+              </p>
+            </div>
+          </div>
+
+          {% if is_customer_view %}
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Tampilkan QR
+              </button>
+            </div>
+          {% endif %}
+
+          {% if can_manage_ticket %}
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+              <a
+                href="{% url 'tickets:ticket_edit' ticket.ticket_id %}?role={{ page_role }}"
+                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:bg-slate-50"
+              >
+                Update
+              </a>
+
+              <a
+                href="{% url 'tickets:ticket_delete' ticket.ticket_id %}?role={{ page_role }}"
+                class="inline-flex items-center gap-2 rounded-full border border-red-100 bg-white px-4 py-2.5 text-sm font-bold text-red-500 shadow-sm transition hover:bg-red-50"
+              >
+                Hapus
+              </a>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if is_customer_view %}
+          <div class="flex w-full shrink-0 items-center justify-center lg:w-36">
+            <div class="flex h-full min-h-[170px] w-full max-w-[130px] flex-col items-center justify-center rounded-2xl bg-slate-50 px-4 py-5">
+              <div class="grid h-20 w-20 grid-cols-3 gap-1 rounded-xl bg-white p-3 shadow-sm">
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-white"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+                <span class="rounded-sm bg-slate-900"></span>
+              </div>
+
+              <p class="mt-3 text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+                Scan Entry
+              </p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+      <p class="text-sm font-semibold text-slate-500">
+        Belum ada data tiket.
+      </p>
+    </div>
+  {% endfor %}
+</div>

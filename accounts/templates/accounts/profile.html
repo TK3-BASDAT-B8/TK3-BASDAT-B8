@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Profil Saya | TikTakTuk{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-semibold text-indigo-600">DASHBOARD PENGGUNA</p>
+      <h1 class="text-2xl font-bold text-gray-900">Profil Saya</h1>
+      <p class="text-sm text-gray-500">Username tidak dapat diubah. Data role disimpan pada session setelah login.</p>
+    </div>
+    <a href="{% url 'accounts:dashboard' %}" class="text-sm font-semibold text-indigo-600 hover:underline">Kembali ke Dashboard</a>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border p-6">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold">
+          {{ user.name|default:user.username|first|upper }}
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">{{ user.name|default:user.username }}</h2>
+          <p class="text-sm text-gray-500">@{{ user.username }}</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        {% if user.role != 'administrator' %}
+          <a href="{% url 'accounts:profile_edit' %}" class="px-4 py-2 border rounded-xl font-semibold text-sm hover:bg-gray-50">Edit Profil</a>
+        {% endif %}
+        <a href="{% url 'accounts:password_update' %}" class="px-4 py-2 bg-gray-900 text-white rounded-xl font-semibold text-sm">Update Password</a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase">Role</p>
+        <p class="font-semibold text-gray-900">
+          {% if user.role == 'administrator' %}Administrator{% elif user.role == 'organizer' %}Organizer{% else %}Customer{% endif %}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-gray-400 uppercase">Username</p>
+        <p class="font-semibold text-gray-900">{{ user.username }}</p>
+      </div>
+
+      {% if user.role == 'customer' %}
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Nama Lengkap</p>
+          <p class="font-semibold text-gray-900">{{ user.name }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Nomor Telepon</p>
+          <p class="font-semibold text-gray-900">{{ user.phone_number|default:'-' }}</p>
+        </div>
+      {% elif user.role == 'organizer' %}
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Nama Organizer</p>
+          <p class="font-semibold text-gray-900">{{ user.name }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-bold text-gray-400 uppercase">Contact Email</p>
+          <p class="font-semibold text-gray-900">{{ user.contact_email|default:'-' }}</p>
+        </div>
+      {% else %}
+        <div class="md:col-span-2">
+          <p class="text-xs font-bold text-gray-400 uppercase">Akses</p>
+          <p class="font-semibold text-gray-900">Admin dapat mengelola data sistem, namun tidak memiliki profil customer/organizer tambahan.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

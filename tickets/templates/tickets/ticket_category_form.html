@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "tickets/partials/ticket_category_page.html" %}
+  <div class="fixed inset-0 z-40 bg-slate-950/50"></div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between"><h2 class="text-lg font-extrabold text-slate-950">{% if form_mode == 'edit' %}Update Ticket Category{% else %}Create Ticket Category{% endif %}</h2><a href="{% url 'tickets:ticket_category_list' %}" class="text-3xl leading-none text-slate-400">&times;</a></div>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div><label class="mb-1.5 block text-xs font-extrabold uppercase text-slate-500">Event</label><select name="tevent_id" required class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm"><option value="">Pilih Event</option>{% for event in events %}<option value="{{ event.event_id }}" {% if selected_category.tevent_id == event.event_id %}selected{% endif %}>{{ event.event_title }}</option>{% endfor %}</select></div>
+        <div><label class="mb-1.5 block text-xs font-extrabold uppercase text-slate-500">Category Name</label><input name="category_name" required value="{{ selected_category.category_name|default:'' }}" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm"></div>
+        <div class="grid grid-cols-2 gap-4"><div><label class="mb-1.5 block text-xs font-extrabold uppercase text-slate-500">Quota</label><input type="number" min="1" name="quota" required value="{{ selected_category.quota|default:'' }}" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm"></div><div><label class="mb-1.5 block text-xs font-extrabold uppercase text-slate-500">Price</label><input type="number" min="0" step="0.01" name="price" required value="{{ selected_category.price|default:'' }}" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm"></div></div>
+        <div class="grid grid-cols-2 gap-3 pt-2"><a href="{% url 'tickets:ticket_category_list' %}" class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 text-sm font-extrabold text-slate-700">Cancel</a><button class="h-11 rounded-2xl bg-blue-600 text-sm font-extrabold text-white">{% if form_mode == 'edit' %}Update{% else %}Create{% endif %}</button></div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "venues/partials/seat_page.html" %}
+  <div class="fixed inset-0 z-40 bg-slate-950/50"></div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h2 class="text-lg font-extrabold text-slate-950">{% if form_mode == 'edit' %}Edit Kursi{% else %}Tambah Kursi Baru{% endif %}</h2>
+        <a href="{% url 'venues:seat_list' %}" class="text-3xl leading-none text-slate-400 hover:text-slate-700">&times;</a>
+      </div>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Venue</label>
+          <select name="venue_id" required class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+            <option value="">Pilih venue</option>
+            {% for venue in venues %}<option value="{{ venue.venue_id }}" {% if selected_seat.venue_id == venue.venue_id %}selected{% endif %}>{{ venue.venue_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div><label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Section</label><input name="section" required value="{{ selected_seat.section|default:'' }}" placeholder="WVIP" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></div>
+          <div><label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">Baris</label><input name="row_number" required value="{{ selected_seat.row_number|default:'' }}" placeholder="A" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></div>
+          <div><label class="mb-1.5 block text-xs font-extrabold uppercase tracking-wide text-slate-500">No. Kursi</label><input name="seat_number" required value="{{ selected_seat.seat_number|default:'' }}" placeholder="1" class="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <a href="{% url 'venues:seat_list' %}" class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 text-sm font-extrabold text-slate-700 hover:bg-slate-50">Batal</a>
+          <button class="h-11 rounded-2xl bg-blue-600 text-sm font-extrabold text-white hover:bg-blue-700">{% if form_mode == 'edit' %}Simpan{% else %}Tambah{% endif %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

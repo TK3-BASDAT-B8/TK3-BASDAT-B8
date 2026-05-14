@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+  {% include "tickets/partials/ticket_category_page.html" %}
+  <div class="fixed inset-0 z-40 bg-slate-950/50"></div><div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"><div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl"><h2 class="text-lg font-extrabold text-red-600">Delete Ticket Category</h2><p class="mt-4 text-sm text-slate-600">Category ID: <span class="font-mono">{{ selected_category.category_id }}</span></p><p class="mt-1 text-sm text-slate-600">Category Name: <strong>{{ selected_category.category_name }}</strong></p><form method="post" class="mt-6 grid grid-cols-2 gap-3">{% csrf_token %}<a href="{% url 'tickets:ticket_category_list' %}" class="inline-flex h-11 items-center justify-center rounded-2xl border border-slate-200 text-sm font-extrabold text-slate-700">Cancel</a><button class="h-11 rounded-2xl bg-red-600 text-sm font-extrabold text-white">Confirm Deletion</button></form></div></div>
+{% endblock %}

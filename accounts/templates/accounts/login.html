@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Login | TikTakTuk{% endblock %}
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border p-8">
+    <div class="text-center mb-6">
+      <div class="mx-auto bg-blue-600 text-white rounded-xl w-12 h-12 flex items-center justify-center font-bold">TT</div>
+      <h1 class="text-2xl font-bold mt-3">TikTakTuk</h1>
+      <p class="text-sm text-slate-500">Masuk untuk mengakses fitur sesuai role.</p>
+    </div>
+
+    {% if error %}<div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-xl text-sm">{{ error }}</div>{% endif %}
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="text-sm font-semibold">Username</label>
+        <input name="username" class="w-full border rounded-xl px-3 py-2 mt-1" placeholder="Masukkan username" required>
+      </div>
+      <div>
+        <label class="text-sm font-semibold">Password</label>
+        <input name="password" type="password" class="w-full border rounded-xl px-3 py-2 mt-1" placeholder="Masukkan password" required>
+      </div>
+      <button class="w-full bg-black text-white py-2 rounded-xl font-semibold">Masuk</button>
+    </form>
+
+    <p class="text-center text-sm mt-5">Belum punya akun? <a href="{% url 'accounts:register' %}" class="text-blue-600 font-semibold">Daftar sekarang</a></p>
+
+    <div class="mt-6 text-xs text-slate-600 bg-slate-100 rounded-xl p-3 leading-relaxed">
+      <b>Akun dummy dari DDL:</b><br>
+      Admin: putri / lastname<br>
+      Organizer: nadzim / programmerhandal<br>
+      Customer: syafiq / panjangpanjangin
+    </div>
+  </div>
+</div>
+{% endblock %}

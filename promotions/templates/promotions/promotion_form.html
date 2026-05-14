@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if mode == 'create' %}Buat Promo{% else %}Update Promo{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-2xl border shadow-sm p-6">
+  <div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+      <p class="text-sm font-semibold text-indigo-600">PROMOTION</p>
+      <h1 class="text-2xl font-bold text-gray-900">{% if mode == 'create' %}Buat Promo Baru{% else %}Update Promo{% endif %}</h1>
+      <p class="text-sm text-gray-500">Kode promo, tipe diskon, periode berlaku, dan batas penggunaan.</p>
+    </div>
+    <a href="{% url 'promotions:promotion_list' %}" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</a>
+  </div>
+
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Kode Promo</label>
+      <input name="promo_code" required value="{{ promotion.promo_code|default:'' }}" placeholder="cth. TIKTAK20" class="w-full border rounded-xl px-4 py-2">
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipe Diskon</label>
+        <select name="discount_type" required class="w-full border rounded-xl px-4 py-2">
+          <option value="PERCENTAGE" {% if promotion.discount_type == 'PERCENTAGE' %}selected{% endif %}>Persentase</option>
+          <option value="NOMINAL" {% if promotion.discount_type == 'NOMINAL' %}selected{% endif %}>Nominal</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nilai Diskon</label>
+        <input type="number" step="0.01" min="0.01" name="discount_value" required value="{{ promotion.discount_value|default:'' }}" placeholder="20 atau 50000" class="w-full border rounded-xl px-4 py-2">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal Mulai</label>
+        <input type="date" name="start_date" required value="{{ promotion.start_date|date:'Y-m-d'|default:promotion.start_date }}" class="w-full border rounded-xl px-4 py-2">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tanggal Berakhir</label>
+        <input type="date" name="end_date" required value="{{ promotion.end_date|date:'Y-m-d'|default:promotion.end_date }}" class="w-full border rounded-xl px-4 py-2">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Batas Penggunaan</label>
+      <input type="number" min="1" name="usage_limit" required value="{{ promotion.usage_limit|default:'' }}" class="w-full border rounded-xl px-4 py-2">
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <a href="{% url 'promotions:promotion_list' %}" class="px-5 py-2 border rounded-xl font-semibold">Batal</a>
+      <button class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold">
+        {% if mode == 'create' %}Buat{% else %}Simpan{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
