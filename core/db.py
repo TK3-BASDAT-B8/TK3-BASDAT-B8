@@ -48,7 +48,8 @@ def execute_returning(sql, params=None):
 
 def db_error_message(exc):
     msg = str(exc).strip().split('\n')[0]
-    for prefix in ('ERROR:  ', 'ERROR: '):
-        if msg.startswith(prefix):
-            msg = msg[len(prefix):]
-    return msg
+
+    if msg.startswith('ERROR:'):
+        return msg
+
+    return f'ERROR: {msg}'
