@@ -1,0 +1,25 @@
+{
+  "builds": [
+    {
+      "src": "tiktaktuk_b8/wsgi.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "build_files.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "staticfiles"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "tiktaktuk_b8/wsgi.py"
+    }
+  ]
+}
