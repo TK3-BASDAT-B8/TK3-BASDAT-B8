@@ -209,87 +209,110 @@
   </div>
 
   <script>
-    function getSelectedCategory() {
-      return document.querySelector('input[name="category_id"]:checked');
-    }
-
-    function updateCategoryOptionsByOrder() {
-      const orderSelect = document.getElementById('ticket-order-select');
-      const categoryOptions = document.querySelectorAll('.ticket-category-option');
-
-      if (!orderSelect || !categoryOptions.length) return;
-
-      const selectedOrder = orderSelect.options[orderSelect.selectedIndex];
-      const orderEventId = selectedOrder ? selectedOrder.dataset.eventId || '' : '';
-
-      categoryOptions.forEach(function(label) {
-        const input = label.querySelector('input[name="category_id"]');
-
-        if (!input) return;
-
-        const categoryEventId = input.dataset.eventId || '';
-        const matchesEvent = !orderEventId || categoryEventId === orderEventId;
-
-        label.classList.toggle('hidden', !matchesEvent);
-
-        // Penting:
-        // Jangan disable karena quota penuh.
-        // Disable hanya kalau beda event dengan order.
-        input.disabled = !matchesEvent;
-
-        if (!matchesEvent && input.checked) {
-          input.checked = false;
-        }
-      });
-
-      updateSeatOptions();
-    }
-
-    function updateSeatOptions() {
-      const selectedCategory = getSelectedCategory();
-      const seatSelect = document.getElementById('ticket-seat-select');
-      const seatWrapper = document.getElementById('ticket-seat-wrapper');
-
-      if (!seatSelect || !seatWrapper) return;
-
-      const venueId = selectedCategory ? selectedCategory.dataset.venueId || '' : '';
-      const reserved = selectedCategory ? selectedCategory.dataset.reserved === 'true' : false;
-
-      seatWrapper.classList.toggle('hidden', !reserved);
-
-      Array.from(seatSelect.options).forEach(function(option) {
-        if (!option.value) {
-          option.hidden = false;
-          option.disabled = false;
-          return;
-        }
-
-        const matchesVenue = option.dataset.venueId === venueId;
-
-        option.hidden = !matchesVenue;
-        option.disabled = !matchesVenue;
-      });
-
-      const selectedSeat = seatSelect.options[seatSelect.selectedIndex];
-
-      if (!reserved || !selectedSeat || selectedSeat.disabled || selectedSeat.hidden) {
-        seatSelect.value = '';
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const orderSelect = document.getElementById('ticket-order-select');
-
-      if (orderSelect) {
-        orderSelect.addEventListener('change', updateCategoryOptionsByOrder);
+    (function() {
+      function getSelectedCategory() {
+        return document.querySelector('input[name="category_id"]:checked');
       }
 
-      document.querySelectorAll('input[name="category_id"]').forEach(function(input) {
-        input.addEventListener('change', updateSeatOptions);
-      });
+      function visibleCategoryInputs() {
+        return Array.from(document.querySelectorAll('input[name="category_id"]'))
+          .filter(function(input) {
+            const label = input.closest('.ticket-category-option');
+            return label && !label.classList.contains('hidden') && !input.disabled;
+          });
+      }
 
-      updateCategoryOptionsByOrder();
-      updateSeatOptions();
-    });
+      function updateSeatOptions() {
+        const selectedCategory = getSelectedCategory();
+        const seatSelect = document.getElementById('ticket-seat-select');
+        const seatWrapper = document.getElementById('ticket-seat-wrapper');
+
+        if (!seatSelect || !seatWrapper) return;
+
+        const venueId = selectedCategory ? selectedCategory.dataset.venueId || '' : '';
+        const reserved = selectedCategory ? selectedCategory.dataset.reserved === 'true' : false;
+
+        seatWrapper.classList.toggle('hidden', !reserved);
+        seatSelect.disabled = !reserved;
+
+        Array.from(seatSelect.options).forEach(function(option) {
+          if (!option.value) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+          }
+
+          const matchesVenue = option.dataset.venueId === venueId;
+          option.hidden = !matchesVenue;
+          option.disabled = !matchesVenue;
+        });
+
+        const selectedSeat = seatSelect.options[seatSelect.selectedIndex];
+
+        if (!reserved || !selectedSeat || selectedSeat.disabled || selectedSeat.hidden) {
+          seatSelect.value = '';
+        }
+      }
+
+      function updateCategoryOptionsByOrder() {
+        const orderSelect = document.getElementById('ticket-order-select');
+        const categoryOptions = document.querySelectorAll('.ticket-category-option');
+
+        if (!orderSelect || !categoryOptions.length) return;
+
+        const selectedOrder = orderSelect.options[orderSelect.selectedIndex];
+        const orderSelected = Boolean(orderSelect.value);
+        const orderEventId = selectedOrder ? selectedOrder.dataset.eventId || '' : '';
+        let checkedStillVisible = false;
+
+        categoryOptions.forEach(function(label) {
+          const input = label.querySelector('input[name="category_id"]');
+
+          if (!input) return;
+
+          const categoryEventId = input.dataset.eventId || '';
+          const matchesEvent = !orderEventId || categoryEventId === orderEventId;
+
+          label.classList.toggle('hidden', !matchesEvent);
+
+          // Jangan disable karena quota penuh. Kuota tetap divalidasi oleh trigger database.
+          // Disable hanya kalau kategori bukan milik event dari order yang dipilih.
+          input.disabled = !matchesEvent;
+
+          if (!matchesEvent && input.checked) {
+            input.checked = false;
+          }
+
+          if (matchesEvent && input.checked) {
+            checkedStillVisible = true;
+          }
+        });
+
+        // Karena kategori memakai radio card, pilih otomatis opsi pertama yang valid
+        // supaya field kursi langsung muncul untuk event/venue reserved seating.
+        if (orderSelected && !checkedStillVisible) {
+          const firstVisibleCategory = visibleCategoryInputs()[0];
+          if (firstVisibleCategory) {
+            firstVisibleCategory.checked = true;
+          }
+        }
+
+        updateSeatOptions();
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const orderSelect = document.getElementById('ticket-order-select');
+
+        if (orderSelect) {
+          orderSelect.addEventListener('change', updateCategoryOptionsByOrder);
+        }
+
+        document.querySelectorAll('input[name="category_id"]').forEach(function(input) {
+          input.addEventListener('change', updateSeatOptions);
+        });
+
+        updateCategoryOptionsByOrder();
+      });
+    })();
   </script>
 {% endblock %}
