@@ -29,6 +29,7 @@
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
                 Order
               </label>
+
               <select
                 id="ticket-order-select"
                 name="order_id"
@@ -36,6 +37,7 @@
                 class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               >
                 <option value="">Pilih order</option>
+
                 {% for order in orders %}
                   <option
                     value="{{ order.order_id }}"
@@ -52,39 +54,62 @@
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
                 Kategori Tiket
               </label>
-              <select
-                id="ticket-category-select"
-                name="category_id"
-                required
-                class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="">Pilih kategori</option>
+
+              <div id="ticket-category-list" class="max-h-56 space-y-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-2">
                 {% for category in categories %}
-                  <option
-                    value="{{ category.category_id }}"
+                  <label
+                    class="ticket-category-option flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm transition hover:border-blue-400 hover:bg-blue-50"
                     data-event-id="{{ category.event_id }}"
-                    data-venue-id="{{ category.venue_id }}"
-                    data-reserved="{% if category.has_reserved_seating %}true{% else %}false{% endif %}"
-                    data-remaining="{{ category.remaining }}"
-                    {% if selected_ticket.category_id == category.category_id %}selected{% endif %}
-                    {% if category.remaining <= 0 %}disabled{% endif %}
                   >
-                    {{ category.label }}
-                  </option>
+                    <input
+                      type="radio"
+                      name="category_id"
+                      value="{{ category.category_id }}"
+                      required
+                      class="mt-1"
+                      data-event-id="{{ category.event_id }}"
+                      data-venue-id="{{ category.venue_id }}"
+                      data-reserved="{% if category.has_reserved_seating %}true{% else %}false{% endif %}"
+                      data-remaining="{{ category.remaining }}"
+                      {% if selected_ticket.category_id == category.category_id %}checked{% endif %}
+                    />
+
+                    <span class="flex-1">
+                      <span class="block font-bold text-slate-700">
+                        {{ category.label }}
+                      </span>
+
+                      {% if category.remaining <= 0 %}
+                        <span class="mt-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-extrabold text-red-600">
+                          Penuh 
+                        </span>
+                      {% else %}
+                        <span class="mt-1 inline-flex rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-extrabold text-green-600">
+                          Tersedia
+                        </span>
+                      {% endif %}
+                    </span>
+                  </label>
+                {% empty %}
+                  <div class="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm font-semibold text-slate-400">
+                    Belum ada kategori tiket.
+                  </div>
                 {% endfor %}
-              </select>
+              </div>
             </div>
 
             <div id="ticket-seat-wrapper" class="hidden">
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
                 Kursi <span class="normal-case">(opsional — reserved seating)</span>
               </label>
+
               <select
                 id="ticket-seat-select"
                 name="seat_id"
                 class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               >
                 <option value="">Tanpa Kursi</option>
+
                 {% for seat in seats %}
                   <option
                     value="{{ seat.seat_id }}"
@@ -101,6 +126,7 @@
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
                 Kode Tiket
               </label>
+
               <input
                 type="text"
                 value="Auto-generate saat dibuat"
@@ -115,6 +141,7 @@
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
                 Kode Tiket
               </label>
+
               <input
                 type="text"
                 value="{{ selected_ticket.ticket_code }}"
@@ -127,6 +154,7 @@
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
                 Status Order
               </label>
+
               <select
                 name="payment_status"
                 required
@@ -144,11 +172,13 @@
               <label class="mb-1.5 block text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
                 Kursi
               </label>
+
               <select
                 name="seat_id"
                 class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               >
                 <option value="">Tanpa Kursi</option>
+
                 {% for seat in seats %}
                   <option value="{{ seat.seat_id }}" {% if selected_ticket.seat_id == seat.seat_id %}selected{% endif %}>
                     {{ seat.label }}
@@ -179,90 +209,110 @@
   </div>
 
   <script>
-    function updateTicketCreateFields() {
-      const orderSelect = document.getElementById('ticket-order-select');
-      const categorySelect = document.getElementById('ticket-category-select');
+    (function() {
+      function getSelectedCategory() {
+        return document.querySelector('input[name="category_id"]:checked');
+      }
 
-      if (!orderSelect || !categorySelect) return;
+      function visibleCategoryInputs() {
+        return Array.from(document.querySelectorAll('input[name="category_id"]'))
+          .filter(function(input) {
+            const label = input.closest('.ticket-category-option');
+            return label && !label.classList.contains('hidden') && !input.disabled;
+          });
+      }
 
-      const selectedOrder = orderSelect.options[orderSelect.selectedIndex];
-      const orderEventId = selectedOrder ? selectedOrder.dataset.eventId || '' : '';
+      function updateSeatOptions() {
+        const selectedCategory = getSelectedCategory();
+        const seatSelect = document.getElementById('ticket-seat-select');
+        const seatWrapper = document.getElementById('ticket-seat-wrapper');
 
-      let firstEnabledCategory = null;
+        if (!seatSelect || !seatWrapper) return;
 
-      Array.from(categorySelect.options).forEach(function(option) {
-        if (!option.value) {
-          option.hidden = false;
-          option.disabled = false;
-          return;
+        const venueId = selectedCategory ? selectedCategory.dataset.venueId || '' : '';
+        const reserved = selectedCategory ? selectedCategory.dataset.reserved === 'true' : false;
+
+        seatWrapper.classList.toggle('hidden', !reserved);
+        seatSelect.disabled = !reserved;
+
+        Array.from(seatSelect.options).forEach(function(option) {
+          if (!option.value) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+          }
+
+          const matchesVenue = option.dataset.venueId === venueId;
+          option.hidden = !matchesVenue;
+          option.disabled = !matchesVenue;
+        });
+
+        const selectedSeat = seatSelect.options[seatSelect.selectedIndex];
+
+        if (!reserved || !selectedSeat || selectedSeat.disabled || selectedSeat.hidden) {
+          seatSelect.value = '';
+        }
+      }
+
+      function updateCategoryOptionsByOrder() {
+        const orderSelect = document.getElementById('ticket-order-select');
+        const categoryOptions = document.querySelectorAll('.ticket-category-option');
+
+        if (!orderSelect || !categoryOptions.length) return;
+
+        const selectedOrder = orderSelect.options[orderSelect.selectedIndex];
+        const orderSelected = Boolean(orderSelect.value);
+        const orderEventId = selectedOrder ? selectedOrder.dataset.eventId || '' : '';
+        let checkedStillVisible = false;
+
+        categoryOptions.forEach(function(label) {
+          const input = label.querySelector('input[name="category_id"]');
+
+          if (!input) return;
+
+          const categoryEventId = input.dataset.eventId || '';
+          const matchesEvent = !orderEventId || categoryEventId === orderEventId;
+
+          label.classList.toggle('hidden', !matchesEvent);
+
+          // Jangan disable karena quota penuh. Kuota tetap divalidasi oleh trigger database.
+          // Disable hanya kalau kategori bukan milik event dari order yang dipilih.
+          input.disabled = !matchesEvent;
+
+          if (!matchesEvent && input.checked) {
+            input.checked = false;
+          }
+
+          if (matchesEvent && input.checked) {
+            checkedStillVisible = true;
+          }
+        });
+
+        // Karena kategori memakai radio card, pilih otomatis opsi pertama yang valid
+        // supaya field kursi langsung muncul untuk event/venue reserved seating.
+        if (orderSelected && !checkedStillVisible) {
+          const firstVisibleCategory = visibleCategoryInputs()[0];
+          if (firstVisibleCategory) {
+            firstVisibleCategory.checked = true;
+          }
         }
 
-        const matchesEvent = !orderEventId || option.dataset.eventId === orderEventId;
-        const hasQuota = parseInt(option.dataset.remaining || '0', 10) > 0;
+        updateSeatOptions();
+      }
 
-        option.hidden = !matchesEvent;
-        option.disabled = !matchesEvent || !hasQuota;
+      document.addEventListener('DOMContentLoaded', function() {
+        const orderSelect = document.getElementById('ticket-order-select');
 
-        if (!firstEnabledCategory && !option.disabled) {
-          firstEnabledCategory = option;
+        if (orderSelect) {
+          orderSelect.addEventListener('change', updateCategoryOptionsByOrder);
         }
+
+        document.querySelectorAll('input[name="category_id"]').forEach(function(input) {
+          input.addEventListener('change', updateSeatOptions);
+        });
+
+        updateCategoryOptionsByOrder();
       });
-
-      const selectedCategory = categorySelect.options[categorySelect.selectedIndex];
-
-      if (!selectedCategory || selectedCategory.disabled) {
-        categorySelect.value = firstEnabledCategory ? firstEnabledCategory.value : '';
-      }
-
-      updateSeatOptions();
-    }
-
-    function updateSeatOptions() {
-      const categorySelect = document.getElementById('ticket-category-select');
-      const seatSelect = document.getElementById('ticket-seat-select');
-      const seatWrapper = document.getElementById('ticket-seat-wrapper');
-
-      if (!categorySelect || !seatSelect || !seatWrapper) return;
-
-      const selectedCategory = categorySelect.options[categorySelect.selectedIndex];
-      const venueId = selectedCategory ? selectedCategory.dataset.venueId || '' : '';
-      const reserved = selectedCategory ? selectedCategory.dataset.reserved === 'true' : false;
-
-      seatWrapper.classList.toggle('hidden', !reserved);
-
-      Array.from(seatSelect.options).forEach(function(option) {
-        if (!option.value) {
-          option.hidden = false;
-          option.disabled = false;
-          return;
-        }
-
-        const matchesVenue = option.dataset.venueId === venueId;
-
-        option.hidden = !matchesVenue;
-        option.disabled = !matchesVenue;
-      });
-
-      const selectedSeat = seatSelect.options[seatSelect.selectedIndex];
-
-      if (!reserved || !selectedSeat || selectedSeat.disabled) {
-        seatSelect.value = '';
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const orderSelect = document.getElementById('ticket-order-select');
-      const categorySelect = document.getElementById('ticket-category-select');
-
-      if (orderSelect) {
-        orderSelect.addEventListener('change', updateTicketCreateFields);
-      }
-
-      if (categorySelect) {
-        categorySelect.addEventListener('change', updateSeatOptions);
-      }
-
-      updateTicketCreateFields();
-    });
+    })();
   </script>
 {% endblock %}
