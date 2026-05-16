@@ -98,6 +98,16 @@ def venue_create(request):
             capacity = int(selected['capacity'])
             if capacity <= 0:
                 raise ValueError('Kapasitas harus lebih dari 0.')
+            
+            # --- IMPLEMENTASI TRIGGER: trg_venue_no_duplicate (CREATE) ---
+            existing_venue = fetch_one(
+                'SELECT venue_id FROM VENUE WHERE LOWER(venue_name) = LOWER(%s) AND LOWER(city) = LOWER(%s) LIMIT 1',
+                [selected['venue_name'], selected['city']]
+            )
+            if existing_venue:
+                raise ValueError(f'Venue "{selected["venue_name"]}" di kota "{selected["city"]}" sudah terdaftar dengan ID {existing_venue["venue_id"]}.')
+            # -------------------------------------------------------------
+            
             execute_query(
                 'INSERT INTO VENUE (venue_id, venue_name, capacity, address, city) VALUES (%s, %s, %s, %s, %s)',
                 [str(uuid.uuid4()), selected['venue_name'], capacity, selected['address'], selected['city']],
@@ -143,6 +153,16 @@ def venue_edit(request, venue_id):
             capacity = int(venue['capacity'])
             if capacity <= 0:
                 raise ValueError('Kapasitas harus lebih dari 0.')
+
+            # --- IMPLEMENTASI TRIGGER: trg_venue_no_duplicate (EDIT) ---
+            existing_venue = fetch_one(
+                'SELECT venue_id FROM VENUE WHERE LOWER(venue_name) = LOWER(%s) AND LOWER(city) = LOWER(%s) AND venue_id <> %s LIMIT 1',
+                [venue['venue_name'], venue['city'], venue_id]
+            )
+            if existing_venue:
+                raise ValueError(f'Venue "{venue["venue_name"]}" di kota "{venue["city"]}" sudah terdaftar dengan ID {existing_venue["venue_id"]}.')
+            # -----------------------------------------------------------
+
             execute_query(
                 'UPDATE VENUE SET venue_name=%s, capacity=%s, address=%s, city=%s WHERE venue_id=%s',
                 [venue['venue_name'], capacity, venue['address'], venue['city'], venue_id],
@@ -169,11 +189,20 @@ def venue_delete(request, venue_id):
         return redirect('venues:venue_list')
     if request.method == 'POST':
         try:
+            # --- IMPLEMENTASI TRIGGER: trg_venue_no_delete_active (DELETE) ---
+            active_event = fetch_one(
+                'SELECT 1 FROM event WHERE venue_id = %s AND event_datetime >= NOW() LIMIT 1',
+                [venue_id]
+            )
+            if active_event:
+                raise ValueError(f'Venue "{venue["venue_name"]}" masih memiliki event aktif sehingga tidak dapat dihapus.')
+            # -----------------------------------------------------------------
+
             execute_query('DELETE FROM VENUE WHERE venue_id = %s', [venue_id])
             messages.success(request, 'Venue berhasil dihapus.')
             return redirect('venues:venue_list')
-        except DatabaseError as exc:
-            messages.error(request, db_error_message(exc))
+        except (DatabaseError, ValueError) as exc: # Ditambahkan ValueError agar memunculkan pesan exception ke pengguna
+            messages.error(request, db_error_message(exc) if isinstance(exc, DatabaseError) else str(exc))
     return render(request, 'venues/venue_confirm_delete.html', {
         'selected_venue': venue,
         'venues': _fetch_venues(),
