@@ -12,61 +12,69 @@ function removeClosestRow(button) {
   if (row) row.remove();
 }
 
-function updateTicketCreateFields() {
-  const orderSelect = document.getElementById('ticket-order-select');
-  const categorySelect = document.getElementById('ticket-category-select');
-  const seatSelect = document.getElementById('ticket-seat-select');
-  const seatWrapper = document.getElementById('ticket-seat-wrapper');
-  if (!orderSelect || !categorySelect) return;
+(function() {
+  function updateTicketCreateFields() {
+    const orderSelect = document.getElementById('ticket-order-select');
+    const categorySelect = document.getElementById('ticket-category-select');
+    const seatSelect = document.getElementById('ticket-seat-select');
+    const seatWrapper = document.getElementById('ticket-seat-wrapper');
+    if (!orderSelect || !categorySelect || !seatSelect || !seatWrapper) return;
 
-  const selectedOrder = orderSelect.options[orderSelect.selectedIndex];
-  const orderEventId = selectedOrder ? selectedOrder.dataset.eventId || '' : '';
+    const selectedOrder = orderSelect.options[orderSelect.selectedIndex];
+    const orderEventId = selectedOrder ? selectedOrder.dataset.eventId || '' : '';
 
-  let firstVisibleCategory = null;
-  Array.from(categorySelect.options).forEach(function(opt) {
-    const matchesEvent = !orderEventId || !opt.dataset.eventId || opt.dataset.eventId === orderEventId;
-    const hasQuota = opt.dataset.remaining !== '0';
-    opt.hidden = !matchesEvent;
-    opt.disabled = !matchesEvent || !hasQuota;
-    if (!firstVisibleCategory && !opt.disabled) firstVisibleCategory = opt;
-  });
+    let firstVisibleCategory = null;
+    Array.from(categorySelect.options).forEach(function(opt) {
+      const matchesEvent = !orderEventId || !opt.dataset.eventId || opt.dataset.eventId === orderEventId;
+      opt.hidden = !matchesEvent;
+      opt.disabled = !matchesEvent;
+      if (!firstVisibleCategory && !opt.disabled) firstVisibleCategory = opt;
+    });
 
-  if (categorySelect.selectedOptions.length && categorySelect.selectedOptions[0].disabled && firstVisibleCategory) {
-    categorySelect.value = firstVisibleCategory.value;
-  } else if (!categorySelect.value && firstVisibleCategory) {
-    categorySelect.value = firstVisibleCategory.value;
+    if (categorySelect.selectedOptions.length && categorySelect.selectedOptions[0].disabled && firstVisibleCategory) {
+      categorySelect.value = firstVisibleCategory.value;
+    } else if (!categorySelect.value && firstVisibleCategory) {
+      categorySelect.value = firstVisibleCategory.value;
+    }
+
+    updateSeatOptions();
   }
 
-  updateSeatOptions();
-}
+  function updateSeatOptions() {
+    const categorySelect = document.getElementById('ticket-category-select');
+    const seatSelect = document.getElementById('ticket-seat-select');
+    const seatWrapper = document.getElementById('ticket-seat-wrapper');
+    if (!categorySelect || !seatSelect || !seatWrapper) return;
 
-function updateSeatOptions() {
-  const categorySelect = document.getElementById('ticket-category-select');
-  const seatSelect = document.getElementById('ticket-seat-select');
-  const seatWrapper = document.getElementById('ticket-seat-wrapper');
-  if (!categorySelect || !seatSelect || !seatWrapper) return;
+    const opt = categorySelect.options[categorySelect.selectedIndex];
+    const venueId = opt ? opt.dataset.venueId || '' : '';
+    const reserved = opt ? opt.dataset.reserved === 'true' : false;
 
-  const opt = categorySelect.options[categorySelect.selectedIndex];
-  const venueId = opt ? opt.dataset.venueId || '' : '';
-  const reserved = opt ? opt.dataset.reserved === 'true' : false;
-  seatWrapper.classList.toggle('hidden', !reserved);
-  Array.from(seatSelect.options).forEach(function(seatOpt) {
-    if (!seatOpt.value) {
-      seatOpt.hidden = false;
-      seatOpt.disabled = false;
-      return;
+    seatWrapper.classList.toggle('hidden', !reserved);
+    seatSelect.disabled = !reserved;
+
+    Array.from(seatSelect.options).forEach(function(seatOpt) {
+      if (!seatOpt.value) {
+        seatOpt.hidden = false;
+        seatOpt.disabled = false;
+        return;
+      }
+      const matchesVenue = seatOpt.dataset.venueId === venueId;
+      seatOpt.hidden = !matchesVenue;
+      seatOpt.disabled = !matchesVenue;
+    });
+
+    const selectedSeat = seatSelect.options[seatSelect.selectedIndex];
+    if (!reserved || !selectedSeat || selectedSeat.disabled || selectedSeat.hidden) {
+      seatSelect.value = '';
     }
-    const matchesVenue = seatOpt.dataset.venueId === venueId;
-    seatOpt.hidden = !matchesVenue;
-    seatOpt.disabled = !matchesVenue;
-  });
-  if (!reserved) seatSelect.value = '';
-}
+  }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const orderSelect = document.getElementById('ticket-order-select');
-  const categorySelect = document.getElementById('ticket-category-select');
-  if (orderSelect) orderSelect.addEventListener('change', updateTicketCreateFields);
-  if (categorySelect) categorySelect.addEventListener('change', updateSeatOptions);
-  updateTicketCreateFields();
-});
+  document.addEventListener('DOMContentLoaded', function() {
+    const orderSelect = document.getElementById('ticket-order-select');
+    const categorySelect = document.getElementById('ticket-category-select');
+    if (orderSelect) orderSelect.addEventListener('change', updateTicketCreateFields);
+    if (categorySelect) categorySelect.addEventListener('change', updateSeatOptions);
+    updateTicketCreateFields();
+  });
+})();

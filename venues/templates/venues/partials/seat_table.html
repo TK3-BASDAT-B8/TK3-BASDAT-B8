@@ -23,11 +23,15 @@
           {% if can_manage %}
             <td class="px-4 py-3 text-right">
               <a href="{% url 'venues:seat_edit' seat.seat_id %}" class="font-bold text-blue-700 hover:underline">Edit</a>
-              {% if seat.status == 'Terisi' %}
-                <span class="ml-3 cursor-not-allowed font-bold text-slate-300" title="Kursi sudah terisi">Hapus</span>
-              {% else %}
-                <a href="{% url 'venues:seat_delete' seat.seat_id %}" class="ml-3 font-bold text-red-700 hover:underline">Hapus</a>
-              {% endif %}
+              <a
+                href="{% url 'venues:seat_delete' seat.seat_id %}"
+                class="ml-3 font-bold {% if seat.status == 'Terisi' %}text-slate-400 hover:text-red-700{% else %}text-red-700 hover:underline{% endif %}"
+                {% if seat.status == 'Terisi' %}
+                  title="Kursi sudah terisi. Klik untuk membuktikan trigger database menolak penghapusan."
+                {% endif %}
+              >
+                Hapus
+              </a>
             </td>
           {% endif %}
         </tr>
