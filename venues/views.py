@@ -98,15 +98,12 @@ def venue_create(request):
             capacity = int(selected['capacity'])
             if capacity <= 0:
                 raise ValueError('Kapasitas harus lebih dari 0.')
-            
-            # --- IMPLEMENTASI TRIGGER: trg_venue_no_duplicate (CREATE) ---
             existing_venue = fetch_one(
                 'SELECT venue_id FROM VENUE WHERE LOWER(venue_name) = LOWER(%s) AND LOWER(city) = LOWER(%s) LIMIT 1',
                 [selected['venue_name'], selected['city']]
             )
             if existing_venue:
                 raise ValueError(f'Venue "{selected["venue_name"]}" di kota "{selected["city"]}" sudah terdaftar dengan ID {existing_venue["venue_id"]}.')
-            # -------------------------------------------------------------
             
             execute_query(
                 'INSERT INTO VENUE (venue_id, venue_name, capacity, address, city) VALUES (%s, %s, %s, %s, %s)',
@@ -153,15 +150,12 @@ def venue_edit(request, venue_id):
             capacity = int(venue['capacity'])
             if capacity <= 0:
                 raise ValueError('Kapasitas harus lebih dari 0.')
-
-            # --- IMPLEMENTASI TRIGGER: trg_venue_no_duplicate (EDIT) ---
             existing_venue = fetch_one(
                 'SELECT venue_id FROM VENUE WHERE LOWER(venue_name) = LOWER(%s) AND LOWER(city) = LOWER(%s) AND venue_id <> %s LIMIT 1',
                 [venue['venue_name'], venue['city'], venue_id]
             )
             if existing_venue:
                 raise ValueError(f'Venue "{venue["venue_name"]}" di kota "{venue["city"]}" sudah terdaftar dengan ID {existing_venue["venue_id"]}.')
-            # -----------------------------------------------------------
 
             execute_query(
                 'UPDATE VENUE SET venue_name=%s, capacity=%s, address=%s, city=%s WHERE venue_id=%s',
@@ -189,19 +183,17 @@ def venue_delete(request, venue_id):
         return redirect('venues:venue_list')
     if request.method == 'POST':
         try:
-            # --- IMPLEMENTASI TRIGGER: trg_venue_no_delete_active (DELETE) ---
             active_event = fetch_one(
                 'SELECT 1 FROM event WHERE venue_id = %s AND event_datetime >= NOW() LIMIT 1',
                 [venue_id]
             )
             if active_event:
                 raise ValueError(f'Venue "{venue["venue_name"]}" masih memiliki event aktif sehingga tidak dapat dihapus.')
-            # -----------------------------------------------------------------
 
             execute_query('DELETE FROM VENUE WHERE venue_id = %s', [venue_id])
             messages.success(request, 'Venue berhasil dihapus.')
             return redirect('venues:venue_list')
-        except (DatabaseError, ValueError) as exc: # Ditambahkan ValueError agar memunculkan pesan exception ke pengguna
+        except (DatabaseError, ValueError) as exc: 
             messages.error(request, db_error_message(exc) if isinstance(exc, DatabaseError) else str(exc))
     return render(request, 'venues/venue_confirm_delete.html', {
         'selected_venue': venue,
@@ -240,22 +232,30 @@ def _fetch_seats(q='', venue_id=''):
     return rows
 
 
+def _seat_stats(seats):
+    return {
+        'total': len(seats),
+        'available': sum(1 for s in seats if s['status'] == 'Tersedia'),
+        'filled': sum(1 for s in seats if s['status'] == 'Terisi'),
+        'venues': len({s.get('venue_id') for s in seats}),
+        'sections': len({(s.get('venue_id'), s.get('section')) for s in seats}),
+    }
+
+
 def seat_list(request):
     q = request.GET.get('q', '').strip()
     venue_filter = request.GET.get('venue', '').strip()
     seats = _fetch_seats(q, venue_filter)
     venues = fetch_all('SELECT venue_id::text, venue_name FROM VENUE ORDER BY venue_name ASC')
+    can_manage = _can_manage(request)
     return render(request, 'venues/seat_list.html', {
         'seats': seats,
         'venues': venues,
         'q': q,
         'selected_venue_filter': venue_filter,
-        'can_manage': _can_manage(request),
-        'stats': {
-            'total': len(seats),
-            'available': sum(1 for s in seats if s['status'] == 'Tersedia'),
-            'filled': sum(1 for s in seats if s['status'] == 'Terisi'),
-        },
+        'can_manage': can_manage,
+        'is_readonly': not can_manage,
+        'stats': _seat_stats(seats),
     })
 
 
@@ -295,7 +295,7 @@ def seat_create(request):
         'seats': seats,
         'venues': fetch_all('SELECT venue_id::text, venue_name FROM VENUE ORDER BY venue_name ASC'),
         'can_manage': True,
-        'stats': {'total': len(seats), 'available': sum(1 for s in seats if s['status'] == 'Tersedia'), 'filled': sum(1 for s in seats if s['status'] == 'Terisi')},
+        'stats': _seat_stats(seats),
     })
 
 
@@ -337,7 +337,7 @@ def seat_edit(request, seat_id):
         'seats': seats,
         'venues': fetch_all('SELECT venue_id::text, venue_name FROM VENUE ORDER BY venue_name ASC'),
         'can_manage': True,
-        'stats': {'total': len(seats), 'available': sum(1 for s in seats if s['status'] == 'Tersedia'), 'filled': sum(1 for s in seats if s['status'] == 'Terisi')},
+        'stats': _seat_stats(seats),
     })
 
 
@@ -366,5 +366,5 @@ def seat_delete(request, seat_id):
         'selected_seat': seat,
         'seats': seats,
         'can_manage': True,
-        'stats': {'total': len(seats), 'available': sum(1 for s in seats if s['status'] == 'Tersedia'), 'filled': sum(1 for s in seats if s['status'] == 'Terisi')},
+        'stats': _seat_stats(seats),
     })

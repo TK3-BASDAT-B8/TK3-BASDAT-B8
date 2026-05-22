@@ -32,7 +32,7 @@ BEGIN
         WHERE e.venue_id = OLD.venue_id
           AND e.event_datetime >= NOW()
     ) THEN
-        RAISE EXCEPTION 'Venue "%" masih memiliki event aktif sehingga tidak dapat dihapus.', OLD.venue_name;
+        RAISE EXCEPTION 'ERROR: Venue "%" masih memiliki event aktif sehingga tidak dapat dihapus.', OLD.venue_name;
     END IF;
 
     RETURN OLD;
