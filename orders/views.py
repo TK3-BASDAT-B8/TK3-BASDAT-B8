@@ -231,17 +231,10 @@ def _build_event(event_id):
     }
 
 
-def _validate_and_apply_promo(promo_code, event_id, total_amount):
+def _validate_and_apply_promo(promo_code, total_amount):
     promo = fetch_one(
         '''
-        SELECT
-            promotion_id::text,
-            promo_code,
-            discount_type,
-            discount_value,
-            start_date,
-            end_date,
-            usage_limit
+        SELECT promotion_id::text, promo_code, discount_type, discount_value
         FROM PROMOTION
         WHERE UPPER(promo_code) = UPPER(%s)
         ''',
@@ -249,46 +242,7 @@ def _validate_and_apply_promo(promo_code, event_id, total_amount):
     )
 
     if not promo:
-        raise ValueError('Kode promo tidak ditemukan.')
-
-    event = fetch_one(
-        '''
-        SELECT
-            event_id::text,
-            event_title,
-            event_datetime::date AS event_date
-        FROM EVENT
-        WHERE event_id = %s
-        ''',
-        [event_id],
-    )
-
-    if not event:
-        raise ValueError('Event tidak ditemukan.')
-
-    event_date = event['event_date']
-
-    if event_date < promo['start_date'] or event_date > promo['end_date']:
-        raise ValueError(
-            f'ERROR: Promotion "{promo["promo_code"]}" tidak berlaku untuk tanggal event ini.'
-        )
-
-    usage = fetch_one(
-        '''
-        SELECT COUNT(*)::int AS used
-        FROM ORDER_PROMOTION
-        WHERE promotion_id = %s
-        ''',
-        [promo['promotion_id']],
-    )
-
-    used_count = int(usage['used'] or 0)
-    usage_limit = int(promo['usage_limit'])
-
-    if used_count >= usage_limit:
-        raise ValueError(
-            f'ERROR: Promotion "{promo["promo_code"]}" telah mencapai batas maksimum penggunaan.'
-        )
+        raise ValueError('ERROR: Kode promo tidak ditemukan.')
 
     if promo['discount_type'] == 'PERCENTAGE':
         total_amount -= total_amount * float(promo['discount_value']) / 100
@@ -357,22 +311,11 @@ def checkout(request):
             if not cat:
                 raise ValueError('Kategori tiket tidak ditemukan untuk event ini.')
 
-            remaining_quota = int(cat['quota']) - int(cat['used'] or 0)
-
-            if quantity > remaining_quota:
-                raise ValueError(
-                    f'Sisa kuota kategori {cat["category_name"]} hanya {remaining_quota}.'
-                )
-
             total_amount = float(cat['price']) * quantity
             promo = None
 
             if promo_code:
-                promo, total_amount = _validate_and_apply_promo(
-                    promo_code,
-                    event_id,
-                    total_amount,
-                )
+                promo, total_amount = _validate_and_apply_promo(promo_code, total_amount)
 
             with transaction.atomic():
                 order_id = str(uuid.uuid4())
