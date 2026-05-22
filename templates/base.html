@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}TikTakTuk{% endblock %}</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- WAJIB: ini yang bikin hx-get, hx-target, hx-swap bisa jalan -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
+
 <body class="bg-slate-50 text-slate-900">
   {% include "navbar.html" %}
 
@@ -21,6 +27,7 @@
         {% endfor %}
       </div>
     {% endif %}
+
     {% block content %}{% endblock %}
   </main>
 

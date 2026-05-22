@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from django.core.management.base import BaseCommand
 from django.contrib.auth.hashers import make_password
 from core.db import execute_query, fetch_one
+import promotions
 
 
 class Command(BaseCommand):
