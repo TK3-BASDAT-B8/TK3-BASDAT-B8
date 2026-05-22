@@ -1,18 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="bg-slate-900 text-white rounded-2xl p-6 mb-6 flex justify-between">
+<section class="bg-slate-900 text-white rounded-2xl p-6 mb-6 flex justify-between items-start">
   <div>
-    <p>Selamat datang kembali</p>
+    <p class="text-sm text-slate-300">Dashboard Penyelenggara</p>
     <h1 class="text-2xl font-bold">{{ user.name }}</h1>
-    <p>Kelola event Anda</p>
+    <p class="text-sm text-slate-300">Kelola {{ stats.active_events }} acara aktif Anda</p>
   </div>
-  <span class="bg-white text-slate-900 px-3 py-1 rounded-full h-fit">Organizer</span>
+  <div class="flex gap-2">
+    <a href="{% url 'events:event_list' %}" class="bg-white text-slate-900 px-4 py-2 rounded-full text-sm">Kelola Acara</a>
+    <a href="{% url 'venues:venue_list' %}" class="bg-slate-700 text-white px-4 py-2 rounded-full text-sm">Venue</a>
+  </div>
 </section>
 
-<div class="grid grid-cols-4 gap-4">
-  <div class="bg-white p-5 rounded-xl shadow"><p>Event Aktif</p><h2 class="text-2xl font-bold">3</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Tiket Terjual</p><h2 class="text-2xl font-bold">1,243</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Revenue</p><h2 class="text-2xl font-bold">Rp 4.8M</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Venue Aktif</p><h2 class="text-2xl font-bold">3</h2></div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Acara Aktif</p>
+    <h2 class="text-2xl font-bold">{{ stats.active_events }}</h2>
+    <p class="text-xs text-gray-400">Dalam koordinasi</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Tiket Terjual</p>
+    <h2 class="text-2xl font-bold">{{ stats.total_tickets }}</h2>
+    <p class="text-xs text-gray-400">Total terjual</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Revenue</p>
+    <h2 class="text-2xl font-bold">{{ stats.revenue_display }}</h2>
+    <p class="text-xs text-gray-400">Dari order lunas</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Venue Mitra</p>
+    <h2 class="text-2xl font-bold">{{ stats.venue_partners }}</h2>
+    <p class="text-xs text-gray-400">Lokasi aktif</p>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border p-5">
+  <div class="flex justify-between mb-4">
+    <div>
+      <h3 class="font-bold">Performa Acara</h3>
+      <p class="text-sm text-gray-500">Status acara yang Anda kelola</p>
+    </div>
+    <a href="{% url 'events:event_list' %}" class="text-sm text-blue-600">Lihat Semua</a>
+  </div>
+
+  <div class="space-y-4 text-sm">
+    {% for ev in stats.events %}
+    <div class="flex justify-between {% if not forloop.last %}border-b pb-3{% endif %}">
+      <div>
+        <b>{{ ev.event_title }}</b>
+        <p class="text-gray-500">{{ ev.event_datetime|slice:":16" }} &bull; {{ ev.venue_name }}</p>
+      </div>
+      <span class="text-green-600 text-xs font-bold">UPCOMING</span>
+    </div>
+    {% empty %}
+    <p class="text-gray-400 text-sm">Belum ada acara yang dikelola.</p>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

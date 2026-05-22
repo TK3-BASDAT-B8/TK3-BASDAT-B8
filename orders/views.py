@@ -1,290 +1,520 @@
-from django.shortcuts import render, redirect
+import uuid
+
 from django.contrib import messages
-from django.http import JsonResponse
+from django.db import DatabaseError, transaction
+from django.shortcuts import redirect, render
 
-PAYMENT_STATUSES = ['PAID', 'PENDING', 'CANCELLED']
+from core.auth import login_required, page_role, role_required
+from core.db import db_error_message, execute_query, fetch_all, fetch_one
 
-ORDERS = [
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc001',
-        'order_date': '2026-04-28 10:00',
-        'payment_status': 'PAID',
-        'total_amount': 150000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd1',
-        'customer_name': 'Budi Santoso',
-        'event_name': 'Konser Melodi Senja',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc002',
-        'order_date': '2026-04-28 10:05',
-        'payment_status': 'PAID',
-        'total_amount': 200000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd2',
-        'customer_name': 'Siti Rahayu',
-        'event_name': 'Festival Seni Budaya',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc003',
-        'order_date': '2026-04-28 10:10',
-        'payment_status': 'PENDING',
-        'total_amount': 75000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd3',
-        'customer_name': 'Andi Wijaya',
-        'event_name': 'Malam Akustik Bandung',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc004',
-        'order_date': '2026-04-28 10:15',
-        'payment_status': 'PAID',
-        'total_amount': 300000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd4',
-        'customer_name': 'Dewi Putri',
-        'event_name': 'Konser Melodi Senja',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc005',
-        'order_date': '2026-04-28 10:20',
-        'payment_status': 'PAID',
-        'total_amount': 50000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd5',
-        'customer_name': 'Reza Firmansyah',
-        'event_name': 'Festival Seni Budaya',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc006',
-        'order_date': '2026-04-28 10:25',
-        'payment_status': 'CANCELLED',
-        'total_amount': 0.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd6',
-        'customer_name': 'Maya Indira',
-        'event_name': 'Malam Akustik Bandung',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc007',
-        'order_date': '2026-04-28 10:30',
-        'payment_status': 'PAID',
-        'total_amount': 120000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd1',
-        'customer_name': 'Budi Santoso',
-        'event_name': 'Festival Seni Budaya',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc008',
-        'order_date': '2026-04-28 10:35',
-        'payment_status': 'PENDING',
-        'total_amount': 90000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd2',
-        'customer_name': 'Siti Rahayu',
-        'event_name': 'Konser Melodi Senja',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc009',
-        'order_date': '2026-04-28 10:40',
-        'payment_status': 'PAID',
-        'total_amount': 45000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd3',
-        'customer_name': 'Andi Wijaya',
-        'event_name': 'Festival Seni Budaya',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc010',
-        'order_date': '2026-04-28 10:45',
-        'payment_status': 'PAID',
-        'total_amount': 250000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd4',
-        'customer_name': 'Dewi Putri',
-        'event_name': 'Malam Akustik Bandung',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc011',
-        'order_date': '2026-04-28 10:50',
-        'payment_status': 'PAID',
-        'total_amount': 100000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd5',
-        'customer_name': 'Reza Firmansyah',
-        'event_name': 'Konser Melodi Senja',
-    },
-    {
-        'order_id': 'cccccccc-cccc-cccc-cccc-ccccccccc012',
-        'order_date': '2026-04-28 10:55',
-        'payment_status': 'PENDING',
-        'total_amount': 30000.00,
-        'customer_id': 'dddddddd-dddd-dddd-dddd-ddddddddddd6',
-        'customer_name': 'Maya Indira',
-        'event_name': 'Festival Seni Budaya',
-    },
-]
-
-MOCK_ROLE = 'admin'
-MOCK_CUSTOMER_ID = 'dddddddd-dddd-dddd-dddd-ddddddddddd1'
-ORGANIZER_EVENT_NAMES = ['Konser Melodi Senja', 'Festival Seni Budaya']
+PAYMENT_STATUSES = ['Paid', 'Pending', 'Cancelled']
+STATUS_LABELS = {'Paid': 'Lunas', 'Pending': 'Pending', 'Cancelled': 'Dibatalkan'}
 
 
-def get_role(request):
-    return request.GET.get('role', MOCK_ROLE)
+def _fmt_money(value):
+    try:
+        return f"Rp {int(float(value)):,}".replace(',', '.')
+    except (TypeError, ValueError):
+        return 'Rp 0'
 
 
-def is_ajax(request):
-    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+def _current_user(request):
+    return request.session.get('user') or {}
 
 
-def redirect_with_role(role):
-    return redirect(f'/orders/?role={role}')
+def _role_ids(request):
+    user = _current_user(request)
+    return user.get('customer_id'), user.get('organizer_id')
 
 
-def format_rupiah(amount):
-    return f"Rp {amount:,.0f}".replace(",", ".")
+def _get_orders(request, status='', q=''):
+    role = page_role(request)
+    customer_id, organizer_id = _role_ids(request)
+
+    where = ['1=1']
+    params = []
+
+    if role == 'customer' and customer_id:
+        where.append('o.customer_id = %s')
+        params.append(customer_id)
+    elif role == 'organizer' and organizer_id:
+        where.append(
+            '''
+            EXISTS (
+                SELECT 1
+                FROM TICKET t
+                JOIN TICKET_CATEGORY tc ON tc.category_id = t.tcategory_id
+                JOIN EVENT e ON e.event_id = tc.tevent_id
+                WHERE t.torder_id = o.order_id
+                  AND e.organizer_id = %s
+            )
+            '''
+        )
+        params.append(organizer_id)
+
+    if status in PAYMENT_STATUSES:
+        where.append('o.payment_status = %s')
+        params.append(status)
+
+    if q:
+        like = f"%{q.lower()}%"
+        where.append('(LOWER(o.order_id::text) LIKE %s OR LOWER(c.full_name) LIKE %s)')
+        params.extend([like, like])
+
+    rows = fetch_all(
+        f'''
+        SELECT
+            o.order_id::text,
+            o.order_date,
+            o.payment_status,
+            o.total_amount,
+            c.customer_id::text,
+            c.full_name AS customer_name,
+            COALESCE(
+                (
+                    SELECT e.event_title
+                    FROM TICKET t
+                    JOIN TICKET_CATEGORY tc ON tc.category_id = t.tcategory_id
+                    JOIN EVENT e ON e.event_id = tc.tevent_id
+                    WHERE t.torder_id = o.order_id
+                    LIMIT 1
+                ),
+                '-'
+            ) AS event_name,
+            COUNT(t2.ticket_id) AS ticket_count
+        FROM "ORDER" o
+        JOIN CUSTOMER c ON c.customer_id = o.customer_id
+        LEFT JOIN TICKET t2 ON t2.torder_id = o.order_id
+        WHERE {' AND '.join(where)}
+        GROUP BY
+            o.order_id,
+            o.order_date,
+            o.payment_status,
+            o.total_amount,
+            c.customer_id,
+            c.full_name
+        ORDER BY o.order_date DESC
+        ''',
+        params,
+    )
+
+    for row in rows:
+        row['status_label'] = STATUS_LABELS.get(row['payment_status'], row['payment_status'])
+        row['total_display'] = _fmt_money(row['total_amount'])
+        row['order_date_display'] = str(row['order_date'])[:16]
+
+    return rows
 
 
-def order_list(request):
-    role = get_role(request)
+def _orders_context(request, orders=None, **extra):
+    if orders is None:
+        orders = _get_orders(request)
 
-    role_orders = list(ORDERS)
+    all_orders = _get_orders(request)
+    total_revenue = sum(
+        float(o['total_amount'])
+        for o in all_orders
+        if o['payment_status'] == 'Paid'
+    )
 
-    if role == 'customer':
-        role_orders = [o for o in role_orders if o['customer_id'] == MOCK_CUSTOMER_ID]
-    elif role == 'organizer':
-        role_orders = [o for o in role_orders if o['event_name'] in ORGANIZER_EVENT_NAMES]
-
-    orders = list(role_orders)
-
-    filter_status = request.GET.get('status', 'all')
-    if filter_status in PAYMENT_STATUSES:
-        orders = [o for o in orders if o['payment_status'] == filter_status]
-
-    search = request.GET.get('q', '').strip().lower()
-    if search:
-        orders = [
-            o for o in orders
-            if search in o['order_id'].lower()
-            or search in o['customer_name'].lower()
-            or search in o['event_name'].lower()
-        ]
-
-    total_orders = len(role_orders)
-    total_paid = sum(1 for o in role_orders if o['payment_status'] == 'PAID')
-    total_pending = sum(1 for o in role_orders if o['payment_status'] == 'PENDING')
-    total_revenue = sum(o['total_amount'] for o in role_orders if o['payment_status'] == 'PAID')
-
-    return render(request, 'orders/order_list.html', {
+    ctx = {
         'orders': orders,
-        'role': role,
+        'role': page_role(request),
         'payment_statuses': PAYMENT_STATUSES,
-        'filter_status': filter_status,
-        'search': search,
-        'total_orders': total_orders,
-        'total_paid': total_paid,
-        'total_pending': total_pending,
-        'total_revenue_display': format_rupiah(total_revenue),
-    })
-
-
-def checkout(request):
-    role = get_role(request)
-
-    if request.method == 'POST':
-        if is_ajax(request):
-            return JsonResponse({
-                'success': True,
-                'message': 'Order berhasil dibuat! Status pembayaran: PENDING.'
-            })
-
-        messages.success(request, 'Order berhasil dibuat! Status pembayaran: PENDING.')
-        return redirect_with_role(role)
-
-    event = {
-        'event_title': 'Konser Melodi Senja',
-        'event_datetime': '2026-05-15 19:00',
-        'venue_name': 'Jakarta Convention Center',
-        'artists': ['Fourtwnty', 'Hindia'],
-        'categories': [
-            {'category_id': 'cat-001', 'category_name': 'WVIP', 'price': 1500000, 'quota': 50, 'used': 3},
-            {'category_id': 'cat-002', 'category_name': 'VIP', 'price': 750000, 'quota': 150, 'used': 30},
-            {'category_id': 'cat-003', 'category_name': 'Category 1', 'price': 450000, 'quota': 300, 'used': 100},
-        ],
-        'has_reserved_seating': True,
-        'seats': [
-            {'seat_id': 'seat-001', 'section': 'VIP', 'row_number': 'B', 'seat_number': '1'},
-            {'seat_id': 'seat-002', 'section': 'VIP', 'row_number': 'B', 'seat_number': '2'},
-            {'seat_id': 'seat-003', 'section': 'Category 1', 'row_number': 'C', 'seat_number': '5'},
-        ],
+        'status_labels': STATUS_LABELS,
+        'filter_status': request.GET.get('status', ''),
+        'search': request.GET.get('q', ''),
+        'total_orders': len(all_orders),
+        'total_paid': sum(1 for o in all_orders if o['payment_status'] == 'Paid'),
+        'total_pending': sum(1 for o in all_orders if o['payment_status'] == 'Pending'),
+        'total_revenue_display': _fmt_money(total_revenue),
     }
 
-    return render(request, 'orders/checkout.html', {
-        'role': role,
-        'event': event,
-    })
+    ctx.update(extra)
+    return ctx
 
 
+@login_required
+def order_list(request):
+    orders = _get_orders(
+        request,
+        request.GET.get('status', '').strip(),
+        request.GET.get('q', '').strip(),
+    )
+    return render(request, 'orders/order_list.html', _orders_context(request, orders))
+
+
+def _build_event(event_id):
+    ev = fetch_one(
+        '''
+        SELECT
+            e.event_id::text,
+            e.event_title,
+            e.event_datetime,
+            v.venue_name,
+            v.venue_id::text,
+            EXISTS (
+                SELECT 1
+                FROM SEAT sx
+                WHERE sx.venue_id = v.venue_id
+            ) AS has_reserved_seating
+        FROM EVENT e
+        JOIN VENUE v ON e.venue_id = v.venue_id
+        WHERE e.event_id = %s
+        ''',
+        [event_id],
+    )
+
+    if not ev:
+        return None
+
+    artists = fetch_all(
+        '''
+        SELECT a.name
+        FROM ARTIST a
+        JOIN EVENT_ARTIST ea ON a.artist_id = ea.artist_id
+        WHERE ea.event_id = %s
+        ORDER BY a.name ASC
+        ''',
+        [event_id],
+    )
+
+    cats = fetch_all(
+        '''
+        SELECT
+            tc.category_id::text,
+            tc.category_name,
+            tc.price,
+            tc.quota,
+            COUNT(t.ticket_id) AS used
+        FROM TICKET_CATEGORY tc
+        LEFT JOIN TICKET t ON t.tcategory_id = tc.category_id
+        WHERE tc.tevent_id = %s
+        GROUP BY tc.category_id, tc.category_name, tc.price, tc.quota
+        ORDER BY tc.price ASC
+        ''',
+        [event_id],
+    )
+
+    for cat in cats:
+        cat['price_display'] = _fmt_money(cat['price'])
+        cat['remaining'] = int(cat['quota']) - int(cat['used'] or 0)
+
+    seats = fetch_all(
+        '''
+        SELECT
+            s.seat_id::text,
+            s.section,
+            s.row_number,
+            s.seat_number
+        FROM SEAT s
+        WHERE s.venue_id = %s
+          AND NOT EXISTS (
+              SELECT 1
+              FROM HAS_RELATIONSHIP hr
+              WHERE hr.seat_id = s.seat_id
+          )
+        ORDER BY s.section ASC, s.row_number ASC, s.seat_number ASC
+        ''',
+        [ev['venue_id']],
+    )
+
+    return {
+        'event_id': ev['event_id'],
+        'event_title': ev['event_title'],
+        'event_datetime': ev['event_datetime'],
+        'venue_name': ev['venue_name'],
+        'artists': [a['name'] for a in artists],
+        'categories': cats,
+        'has_reserved_seating': ev['has_reserved_seating'],
+        'seats': seats,
+    }
+
+
+def _validate_and_apply_promo(promo_code, total_amount):
+    promo = fetch_one(
+        '''
+        SELECT promotion_id::text, promo_code, discount_type, discount_value
+        FROM PROMOTION
+        WHERE UPPER(promo_code) = UPPER(%s)
+        ''',
+        [promo_code],
+    )
+
+    if not promo:
+        raise ValueError('ERROR: Kode promo tidak ditemukan.')
+
+    if promo['discount_type'] == 'PERCENTAGE':
+        total_amount -= total_amount * float(promo['discount_value']) / 100
+    else:
+        total_amount -= float(promo['discount_value'])
+
+    total_amount = max(total_amount, 0)
+
+    return promo, total_amount
+
+
+@login_required
+def checkout(request):
+    if page_role(request) != 'customer':
+        messages.error(request, 'Hanya customer yang dapat membuat order.')
+        return redirect('events:event_list')
+
+    customer_id = _current_user(request).get('customer_id')
+    event_id = request.GET.get('event_id') or request.POST.get('event_id')
+
+    if not event_id:
+        first = fetch_one(
+            '''
+            SELECT event_id::text
+            FROM EVENT
+            ORDER BY event_datetime
+            LIMIT 1
+            '''
+        )
+        event_id = first['event_id'] if first else None
+
+    if not event_id:
+        messages.error(request, 'Belum ada event untuk checkout.')
+        return redirect('events:event_list')
+
+    if request.method == 'POST':
+        category_id = request.POST.get('category_id', '').strip()
+        promo_code = request.POST.get('promo_code', '').strip()
+        seat_id = request.POST.get('seat_id', '').strip()
+
+        try:
+            quantity = int(request.POST.get('quantity', '1'))
+
+            if quantity <= 0 or quantity > 10:
+                raise ValueError('Jumlah tiket wajib 1 sampai 10.')
+
+            cat = fetch_one(
+                '''
+                SELECT
+                    category_id::text,
+                    category_name,
+                    price,
+                    quota,
+                    (
+                        SELECT COUNT(*)
+                        FROM TICKET t
+                        WHERE t.tcategory_id = TICKET_CATEGORY.category_id
+                    ) AS used
+                FROM TICKET_CATEGORY
+                WHERE category_id = %s
+                  AND tevent_id = %s
+                ''',
+                [category_id, event_id],
+            )
+
+            if not cat:
+                raise ValueError('Kategori tiket tidak ditemukan untuk event ini.')
+
+            total_amount = float(cat['price']) * quantity
+            promo = None
+
+            if promo_code:
+                promo, total_amount = _validate_and_apply_promo(promo_code, total_amount)
+
+            with transaction.atomic():
+                order_id = str(uuid.uuid4())
+
+                execute_query(
+                    '''
+                    INSERT INTO "ORDER" (
+                        order_id,
+                        order_date,
+                        payment_status,
+                        total_amount,
+                        customer_id
+                    )
+                    VALUES (%s, NOW(), %s, %s, %s)
+                    ''',
+                    [order_id, 'Pending', total_amount, customer_id],
+                )
+
+                first_ticket_id = None
+
+                for _ in range(quantity):
+                    ticket_id = str(uuid.uuid4())
+                    ticket_code = f"TIK-{ticket_id[:8].upper()}"
+
+                    execute_query(
+                        '''
+                        INSERT INTO TICKET (
+                            ticket_id,
+                            ticket_code,
+                            tcategory_id,
+                            torder_id
+                        )
+                        VALUES (%s, %s, %s, %s)
+                        ''',
+                        [ticket_id, ticket_code, category_id, order_id],
+                    )
+
+                    if first_ticket_id is None:
+                        first_ticket_id = ticket_id
+
+                if seat_id and first_ticket_id:
+                    execute_query(
+                        '''
+                        INSERT INTO HAS_RELATIONSHIP (
+                            seat_id,
+                            ticket_id
+                        )
+                        VALUES (%s, %s)
+                        ''',
+                        [seat_id, first_ticket_id],
+                    )
+
+                if promo:
+                    execute_query(
+                        '''
+                        INSERT INTO ORDER_PROMOTION (
+                            order_promotion_id,
+                            promotion_id,
+                            order_id
+                        )
+                        VALUES (%s, %s, %s)
+                        ''',
+                        [str(uuid.uuid4()), promo['promotion_id'], order_id],
+                    )
+
+            messages.success(request, 'Order berhasil dibuat dengan status Pending.')
+            return redirect('orders:order_list')
+
+        except (DatabaseError, ValueError) as exc:
+            if isinstance(exc, DatabaseError):
+                messages.error(request, db_error_message(exc))
+            else:
+                messages.error(request, str(exc))
+
+    event = _build_event(event_id)
+
+    if not event:
+        messages.error(request, 'Event tidak ditemukan.')
+        return redirect('events:event_list')
+
+    return render(
+        request,
+        'orders/checkout.html',
+        {
+            'event': event,
+            'role': page_role(request),
+        },
+    )
+
+
+@role_required('administrator')
 def order_update(request, order_id):
-    role = get_role(request)
+    order = fetch_one(
+        '''
+        SELECT
+            o.order_id::text,
+            o.payment_status,
+            o.total_amount,
+            c.full_name AS customer_name
+        FROM "ORDER" o
+        JOIN CUSTOMER c ON c.customer_id = o.customer_id
+        WHERE o.order_id = %s
+        ''',
+        [order_id],
+    )
 
-    if role != 'admin':
-        if is_ajax(request):
-            return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat update order.'}, status=403)
-
-        messages.error(request, 'Hanya admin yang dapat update order.')
-        return redirect_with_role(role)
+    if not order:
+        messages.error(request, 'Order tidak ditemukan.')
+        return redirect('orders:order_list')
 
     if request.method == 'POST':
-        new_status = request.POST.get('payment_status')
+        status = request.POST.get('payment_status')
 
-        found = False
-        for order in ORDERS:
-            if order['order_id'] == order_id:
-                order['payment_status'] = new_status
-                found = True
-                break
+        if status not in PAYMENT_STATUSES:
+            messages.error(request, 'Status pembayaran tidak valid.')
+        else:
+            execute_query(
+                '''
+                UPDATE "ORDER"
+                SET payment_status = %s
+                WHERE order_id = %s
+                ''',
+                [status, order_id],
+            )
+            messages.success(request, 'Status order berhasil diperbarui.')
+            return redirect('orders:order_list')
 
-        if not found:
-            if is_ajax(request):
-                return JsonResponse({'success': False, 'message': 'Order tidak ditemukan.'}, status=404)
-
-            messages.error(request, 'Order tidak ditemukan.')
-            return redirect_with_role(role)
-
-        if is_ajax(request):
-            return JsonResponse({
-                'success': True,
-                'message': f'Order berhasil diupdate menjadi {new_status}.'
-            })
-
-        messages.success(request, f'Order berhasil diupdate menjadi {new_status}.')
-        return redirect_with_role(role)
-
-    return redirect_with_role(role)
+    return render(
+        request,
+        'orders/order_update.html',
+        _orders_context(request, selected_order=order),
+    )
 
 
+@role_required('administrator')
 def order_delete(request, order_id):
-    role = get_role(request)
+    order = fetch_one(
+        '''
+        SELECT
+            o.order_id::text,
+            c.full_name AS customer_name
+        FROM "ORDER" o
+        JOIN CUSTOMER c ON c.customer_id = o.customer_id
+        WHERE o.order_id = %s
+        ''',
+        [order_id],
+    )
 
-    if role != 'admin':
-        if is_ajax(request):
-            return JsonResponse({'success': False, 'message': 'Hanya admin yang dapat delete order.'}, status=403)
-
-        messages.error(request, 'Hanya admin yang dapat delete order.')
-        return redirect_with_role(role)
+    if not order:
+        messages.error(request, 'Order tidak ditemukan.')
+        return redirect('orders:order_list')
 
     if request.method == 'POST':
-        global ORDERS
+        try:
+            with transaction.atomic():
+                execute_query(
+                    '''
+                    DELETE FROM HAS_RELATIONSHIP
+                    WHERE ticket_id IN (
+                        SELECT ticket_id
+                        FROM TICKET
+                        WHERE torder_id = %s
+                    )
+                    ''',
+                    [order_id],
+                )
 
-        before_count = len(ORDERS)
-        ORDERS = [order for order in ORDERS if order['order_id'] != order_id]
+                execute_query(
+                    '''
+                    DELETE FROM ORDER_PROMOTION
+                    WHERE order_id = %s
+                    ''',
+                    [order_id],
+                )
 
-        if len(ORDERS) == before_count:
-            if is_ajax(request):
-                return JsonResponse({'success': False, 'message': 'Order tidak ditemukan.'}, status=404)
+                execute_query(
+                    '''
+                    DELETE FROM TICKET
+                    WHERE torder_id = %s
+                    ''',
+                    [order_id],
+                )
 
-            messages.error(request, 'Order tidak ditemukan.')
-            return redirect_with_role(role)
+                execute_query(
+                    '''
+                    DELETE FROM "ORDER"
+                    WHERE order_id = %s
+                    ''',
+                    [order_id],
+                )
 
-        if is_ajax(request):
-            return JsonResponse({
-                'success': True,
-                'message': 'Order berhasil dihapus.'
-            })
+            messages.success(request, 'Order berhasil dihapus.')
+            return redirect('orders:order_list')
 
-        messages.success(request, 'Order berhasil dihapus.')
-        return redirect_with_role(role)
+        except DatabaseError as exc:
+            messages.error(request, db_error_message(exc))
 
-    return redirect_with_role(role)
+    return render(
+        request,
+        'orders/order_confirm_delete.html',
+        _orders_context(request, selected_order=order),
+    )

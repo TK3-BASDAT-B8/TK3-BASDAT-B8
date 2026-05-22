@@ -1,8 +1,17 @@
-{% extends 'base.html' %}
-{% block title %}TikTakTuk{% endblock %}
+{% extends "base.html" %}
 {% block content %}
-<div>
-  <h1 class="text-2xl font-bold text-gray-800 mb-6"><!-- TODO: page title --></h1>
-  <!-- TODO: implement this template -->
-</div>
+<section class="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-950">{{ event.event_title }}</h1>
+      <p class="mt-2 text-sm text-slate-500">{{ event.event_datetime_display }} - {{ event.venue_name }}</p>
+      <p class="mt-1 text-sm text-slate-500">Organizer: {{ event.organizer_name }}</p>
+    </div>
+    {% if can_manage %}<a href="{% url 'events:event_edit' event.event_id %}" class="rounded-full bg-blue-600 px-5 py-2 text-sm font-extrabold text-white">Edit Acara</a>{% endif %}
+  </div>
+  <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-extrabold uppercase text-slate-400">Artist</p><div class="mt-2 flex flex-wrap gap-2">{% for artist in event.performers %}<span class="rounded-full bg-white px-3 py-1 text-xs font-bold">{{ artist }}</span>{% endfor %}</div></div>
+    <div class="rounded-2xl bg-slate-50 p-4"><p class="text-xs font-extrabold uppercase text-slate-400">Kategori Tiket</p><div class="mt-2 flex flex-wrap gap-2">{% for cat in event.ticket_categories %}<span class="rounded-full bg-white px-3 py-1 text-xs font-bold">{{ cat.category_name }} - Rp {{ cat.price_display }} (Sisa kuota: {{ cat.remaining }})</span>{% endfor %}</div></div>
+  </div>
+</section>
 {% endblock %}

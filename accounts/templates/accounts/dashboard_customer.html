@@ -1,18 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="bg-blue-600 text-white rounded-2xl p-6 mb-6 flex justify-between">
+<section class="bg-blue-600 text-white rounded-2xl p-6 mb-6 flex justify-between items-start">
   <div>
-    <p>Selamat datang kembali</p>
+    <p class="text-sm text-blue-100">Selamat datang kembali</p>
     <h1 class="text-2xl font-bold">{{ user.name }}</h1>
-    <p>Temukan acara favorit Anda</p>
+    <p class="text-sm text-blue-100">{{ stats.active_tickets }} tiket aktif menunggu Anda</p>
   </div>
-  <a href="#" class="bg-white text-blue-600 px-4 py-2 rounded-full h-fit">Cari Tiket</a>
+  <a href="{% url 'events:event_list' %}" class="bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-semibold">Cari Tiket</a>
 </section>
 
-<div class="grid grid-cols-4 gap-4">
-  <div class="bg-white p-5 rounded-xl shadow"><p>Tiket Aktif</p><h2 class="text-2xl font-bold">2</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Total Order</p><h2 class="text-2xl font-bold">12</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Event Diikuti</p><h2 class="text-2xl font-bold">3</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Total Belanja</p><h2 class="text-2xl font-bold">Rp 1.6M</h2></div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Tiket Aktif</p>
+    <h2 class="text-2xl font-bold">{{ stats.active_tickets }}</h2>
+    <p class="text-xs text-gray-400">Siap digunakan</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Tiket Dimiliki</p>
+    <h2 class="text-2xl font-bold">{{ stats.total_tickets }}</h2>
+    <p class="text-xs text-gray-400">Total pembelian</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Promo Tersedia</p>
+    <h2 class="text-2xl font-bold">{{ stats.available_promos }}</h2>
+    <p class="text-xs text-gray-400">Masih berlaku</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Total Belanja</p>
+    <h2 class="text-2xl font-bold">{{ stats.spending_display }}</h2>
+    <p class="text-xs text-gray-400">Dari order lunas</p>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border p-5">
+  <div class="flex justify-between mb-4">
+    <div>
+      <h3 class="font-bold">Tiket Mendatang</h3>
+      <p class="text-sm text-gray-500">Tiket pertunjukan yang akan datang</p>
+    </div>
+    <a href="{% url 'tickets:ticket_list' %}" class="text-sm text-blue-600">Lihat Semua</a>
+  </div>
+
+  <div class="space-y-4 text-sm">
+    {% for ev in stats.events %}
+    <div class="flex justify-between {% if not forloop.last %}border-b pb-3{% endif %}">
+      <div>
+        <b>{{ ev.event_title }}</b>
+        <p class="text-gray-500">{{ ev.event_datetime|slice:":16" }} &bull; {{ ev.venue_name }}</p>
+      </div>
+      <span>&rsaquo;</span>
+    </div>
+    {% empty %}
+    <p class="text-gray-400 text-sm">Belum ada tiket mendatang.</p>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

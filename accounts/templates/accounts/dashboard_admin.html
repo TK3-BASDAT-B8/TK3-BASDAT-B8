@@ -1,17 +1,60 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="bg-slate-900 text-white rounded-2xl p-6 mb-6 flex justify-between">
+<section class="bg-slate-900 text-white rounded-2xl p-6 mb-6 flex justify-between items-start">
   <div>
+    <p class="text-sm text-slate-300">Administrator</p>
     <h1 class="text-2xl font-bold">System Console</h1>
-    <p>Panel administrator TikTakTuk</p>
+    <p class="text-sm text-slate-300">Pantau dan kelola platform TikTakTuk</p>
   </div>
-  <span class="bg-white text-slate-900 px-3 py-1 rounded-full h-fit">Admin</span>
+  <a href="{% url 'promotions:promotion_list' %}" class="bg-white text-slate-900 px-4 py-2 rounded-full text-sm">
+    Promosi
+  </a>
 </section>
 
-<div class="grid grid-cols-4 gap-4">
-  <div class="bg-white p-5 rounded-xl shadow"><p>Total User</p><h2 class="text-2xl font-bold">2,543</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Total Event</p><h2 class="text-2xl font-bold">156</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Revenue</p><h2 class="text-2xl font-bold">Rp 52.4M</h2></div>
-  <div class="bg-white p-5 rounded-xl shadow"><p>Pending Order</p><h2 class="text-2xl font-bold">3</h2></div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Total Pengguna</p>
+    <h2 class="text-2xl font-bold">{{ stats.total_users }}</h2>
+    <p class="text-xs text-gray-400">Pengguna aktif</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Total Acara</p>
+    <h2 class="text-2xl font-bold">{{ stats.total_events }}</h2>
+    <p class="text-xs text-gray-400">Terdaftar di platform</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Omzet Platform</p>
+    <h2 class="text-2xl font-bold">{{ stats.revenue_display }}</h2>
+    <p class="text-xs text-gray-400">Gross volume</p>
+  </div>
+  <div class="bg-white p-5 rounded-xl shadow-sm border">
+    <p class="text-xs text-gray-500">Total Promosi</p>
+    <h2 class="text-2xl font-bold">{{ stats.total_promos }}</h2>
+    <p class="text-xs text-gray-400">Kode promo terdaftar</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="bg-white rounded-xl shadow-sm border p-5">
+    <h3 class="font-bold mb-4">Infrastruktur Venue</h3>
+    <div class="space-y-3 text-sm">
+      <div class="flex justify-between"><span class="text-gray-500">Total Venue Terdaftar</span><b>{{ stats.total_venues }} Lokasi</b></div>
+      <div class="flex justify-between"><span class="text-gray-500">Reserved Seating</span><b>{{ stats.reserved_venues }} Venue</b></div>
+      <div class="flex justify-between"><span class="text-gray-500">Kapasitas Terbesar</span><b>{{ stats.max_capacity_display }} Kursi</b></div>
+    </div>
+    <a href="{% url 'venues:venue_list' %}" class="block mt-5 w-full border rounded-lg py-2 text-sm text-center">Kelola Venue</a>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border p-5">
+    <h3 class="font-bold mb-4">Marketing & Promosi</h3>
+    <div class="space-y-3 text-sm">
+      <div class="flex justify-between"><span class="text-gray-500">Promo Persentase</span><b>{{ stats.promo_percentage }} Aktif</b></div>
+      <div class="flex justify-between"><span class="text-gray-500">Promo Potongan Nominal</span><b>{{ stats.promo_nominal }} Aktif</b></div>
+      <div class="flex justify-between"><span class="text-gray-500">Total Penggunaan</span><b>{{ stats.promo_usage }} Kali</b></div>
+    </div>
+    <a href="{% url 'promotions:promotion_list' %}" class="block mt-5 w-full border rounded-lg py-2 text-sm text-center">
+      Kelola Promosi
+    </a>
+  </div>
 </div>
 {% endblock %}
